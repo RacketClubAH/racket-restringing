@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Racket re-stringing · Aphrodite Hills Racket Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500&family=Prata&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   APHRODITE HILLS — BRAND TOKENS (2025 Guidelines)
+   ============================================================ */
+:root{
+  --mple:#003087; --bronze:#8E7A6B; --pearl:#CFCDC9; --shell:#D6D1C3; --foam:#F9F6F4;
+  --gap:clamp(18px,2.2vw,30px);
+}
+/* Typography roles, named as the guidelines name them */
+.t-title{font-family:"Ivy Presto Headline","IvyPresto Headline",Prata,Georgia,serif;font-weight:400;letter-spacing:.02em;line-height:1.12}
+.t-highlight{font-family:Geologica,system-ui,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.1em}
+.t-body{font-family:Geologica,system-ui,sans-serif;font-weight:300;letter-spacing:0;line-height:1.62}
+.t-info{font-family:Geologica,system-ui,sans-serif;font-weight:300;letter-spacing:.03em}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--foam);color:var(--mple);font-family:Geologica,system-ui,sans-serif;font-weight:300;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+
+.app{display:grid;grid-template-columns:46fr 54fr;height:100vh;height:100dvh}
+
+/* ---------- STAGE ---------- */
+.stage{position:relative;background:var(--mple);color:var(--foam);display:flex;flex-direction:column;align-items:center;padding:calc(var(--gap)*1.2) var(--gap);overflow:hidden}
+.stage-head{width:100%;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.stage-head .club{font-size:11px;color:var(--shell);opacity:.85}
+.stage-head .job{font-size:11px;color:var(--shell);opacity:.7}
+.racket-wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0;padding:14px 0}
+#racket{height:100%;max-height:100%;width:auto;overflow:visible}
+#racket .frame{fill:none;stroke:var(--foam);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#racket .frame-inner{fill:none;stroke:var(--foam);stroke-width:1.1;opacity:.5}
+#racket .grip-wrap{fill:none;stroke:var(--foam);stroke-width:.9;opacity:.45}
+#racket .strings{fill:none;stroke:var(--shell);stroke-linecap:round;opacity:.9;transition:stroke-width .45s ease,opacity .45s ease}
+#racket .strings.crosses{opacity:.75}
+#racket .ghost{opacity:.16}
+
+.detail{position:absolute;left:var(--gap);bottom:var(--gap);width:116px;display:flex;flex-direction:column;gap:8px}
+.detail svg{width:64px;height:64px;overflow:visible}
+.detail .cs{fill:none;stroke:var(--shell);stroke-width:1.4}
+.detail .cs-fine{fill:none;stroke:var(--shell);stroke-width:.7;opacity:.6}
+.detail .cap{font-size:9px;color:var(--shell);opacity:.8;line-height:1.5}
+
+.stage-foot{width:100%;text-align:center;padding-top:6px}
+.stage-foot .brandline{font-size:clamp(19px,2.4vw,29px);color:var(--foam)}
+.stage-foot .setup{margin-top:8px;font-size:11px;color:var(--shell);opacity:.85}
+.stage-foot .sep{opacity:.4;padding:0 8px}
+
+/* ---------- PANEL ---------- */
+.panel{background:var(--foam);overflow-y:auto;scroll-behavior:smooth}
+.panel-inner{padding:calc(var(--gap)*1.5) var(--gap) 200px;max-width:660px;margin:0 auto}
+.masthead .eyebrow{font-size:10.5px;color:var(--bronze)}
+.masthead h1{margin:14px 0 12px;font-size:clamp(30px,3.6vw,44px);color:var(--mple)}
+.masthead p{margin:0;max-width:46ch;font-size:14px;color:var(--mple);opacity:.78}
+
+.block{margin-top:46px;border-top:1px solid var(--pearl);padding-top:24px}
+.block:first-of-type{margin-top:40px}
+.tag{display:inline-block;background:var(--bronze);color:var(--foam);font-size:9.5px;padding:5px 11px 4px;margin-bottom:20px}
+.block h2{margin:0 0 4px;font-size:21px;color:var(--mple)}
+.block .lede{margin:0 0 18px;font-size:13px;color:var(--mple);opacity:.72;max-width:52ch}
+
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+label.field{display:flex;flex-direction:column;gap:7px}
+label.field > span{font-size:10px;color:var(--bronze);text-transform:uppercase;letter-spacing:.1em;font-weight:400}
+.ctl{width:100%;background:transparent;border:0;border-bottom:1px solid var(--pearl);padding:9px 2px;font-size:14.5px;font-weight:300;letter-spacing:.03em;color:var(--mple);transition:border-color .25s ease;border-radius:0}
+.ctl::placeholder{color:var(--mple);opacity:.3}
+.ctl:focus{outline:none;border-bottom-color:var(--mple)}
+select.ctl{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--bronze) 50%),linear-gradient(135deg,var(--bronze) 50%,transparent 50%);background-position:calc(100% - 11px) 18px,calc(100% - 6px) 18px;background-size:5px 5px;background-repeat:no-repeat;padding-right:26px}
+textarea.ctl{border:1px solid var(--pearl);padding:10px;min-height:76px;resize:vertical}
+textarea.ctl:focus{border-color:var(--mple)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:transparent;border:1px solid var(--pearl);color:var(--mple);padding:8px 15px;font-size:11.5px;font-weight:300;letter-spacing:.06em;cursor:pointer;transition:border-color .2s ease,background .2s ease,color .2s ease;border-radius:0}
+.chip:hover{border-color:var(--bronze)}
+.chip[aria-pressed="true"]{background:var(--mple);border-color:var(--mple);color:var(--foam)}
+.chip.soft[aria-pressed="true"]{background:var(--bronze);border-color:var(--bronze)}
+
+.filters{margin-bottom:18px}
+.cards{display:grid;gap:10px}
+.card{position:relative;text-align:left;width:100%;cursor:pointer;background:#fff;border:1px solid var(--pearl);border-left:3px solid transparent;padding:16px 18px;transition:border-color .22s ease,transform .22s ease,box-shadow .22s ease;border-radius:0}
+.card:hover{border-color:var(--bronze);transform:translateX(2px)}
+.card[aria-pressed="true"]{border-color:var(--mple);border-left-color:var(--bronze);box-shadow:0 6px 22px rgba(0,48,135,.07)}
+.card-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.card-name{font-size:16.5px;color:var(--mple)}
+.card-price{font-size:13px;color:var(--bronze);white-space:nowrap;letter-spacing:.03em}
+.card-meta{margin-top:3px;font-size:10.5px;color:var(--bronze);text-transform:uppercase;letter-spacing:.1em}
+.card-for{margin:11px 0 0;font-size:12.5px;line-height:1.55;color:var(--mple);opacity:.76}
+.card-note{margin:5px 0 0;font-size:11.5px;line-height:1.5;color:var(--bronze)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px 18px;margin-top:14px}
+.stat{display:flex;align-items:center;gap:8px}
+.stat b{flex:0 0 54px;font-size:9px;font-weight:400;letter-spacing:.09em;text-transform:uppercase;color:var(--bronze)}
+.bar{flex:1;height:2px;background:var(--pearl);position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--mple);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.empty{border:1px dashed var(--pearl);padding:22px;text-align:center;font-size:13px;color:var(--mple);opacity:.7}
+
+/* ---------- stock manager ---------- */
+.link{background:none;border:0;padding:0;cursor:pointer;color:var(--bronze);font-size:11px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--bronze);line-height:1.6}
+.link:hover{color:var(--mple);border-bottom-color:var(--mple)}
+.mgr{margin-top:26px;background:#fff;border:1px solid var(--pearl);padding:22px}
+.mgr h3{margin:0;font-size:18px;color:var(--mple)}
+.mgr .mgr-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
+.mgr .lede{margin:10px 0 18px}
+.sm-list{list-style:none;margin:0 0 18px;padding:0}
+.sm-list li{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--pearl)}
+.sm-list li:last-child{border-bottom:0}
+.sm-name{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sm-name strong{font-weight:400;font-size:14px;letter-spacing:.03em}
+.sm-name em{font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--bronze)}
+.sm-toggle{display:flex;align-items:center;gap:7px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--bronze);cursor:pointer;white-space:nowrap}
+.sm-toggle input{accent-color:var(--mple);width:15px;height:15px}
+.sm-price{display:flex;align-items:center;gap:4px;font-size:13px}
+.sm-price input{width:62px;border:1px solid var(--pearl);background:transparent;padding:6px 7px;font-size:13px;letter-spacing:.03em;text-align:right;border-radius:0}
+.sm-price input:focus{outline:none;border-color:var(--mple)}
+.sm-del{border:0;background:none;color:var(--bronze);cursor:pointer;font-size:14px;padding:4px 6px;line-height:1}
+.sm-del:hover{color:var(--mple)}
+.charges{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px 0;border-top:1px solid var(--pearl);border-bottom:1px solid var(--pearl);margin-bottom:18px}
+.mgr-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.addform{border-top:1px solid var(--pearl);margin-top:18px;padding-top:18px}
+.addform .row{display:grid;gap:12px;margin-bottom:12px}
+.r2{grid-template-columns:1fr 1fr}
+.r3{grid-template-columns:1fr 1fr 1fr}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.statgrid input{text-align:center}
+
+/* ---------- tension ---------- */
+.tension-row{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:end}
+.stepper{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--pearl);padding-bottom:8px}
+.stepper button{width:30px;height:30px;flex:0 0 30px;border:1px solid var(--pearl);background:transparent;color:var(--mple);cursor:pointer;font-size:15px;line-height:1;transition:border-color .2s,background .2s,color .2s;border-radius:0}
+.stepper button:hover{border-color:var(--mple);background:var(--mple);color:var(--foam)}
+.stepper .val{flex:1;text-align:center;font-size:26px;letter-spacing:.02em}
+.stepper .val small{font-size:11px;letter-spacing:.1em;opacity:.55;margin-left:5px;text-transform:uppercase}
+.advice{margin-top:16px;font-size:12.5px;line-height:1.6;color:var(--mple);opacity:.78;border-left:2px solid var(--bronze);padding-left:13px}
+.advice.warn{color:var(--bronze);opacity:1}
+
+/* ---------- ticket ---------- */
+.ticket{margin-top:48px;background:var(--shell);padding:26px}
+.ticket h2{margin:0 0 16px;font-size:23px;color:var(--mple)}
+.ticket dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:9px 18px;font-size:13px}
+.ticket dt{color:var(--bronze);text-transform:uppercase;font-size:9.5px;letter-spacing:.1em;align-self:center}
+.ticket dd{margin:0;color:var(--mple);letter-spacing:.03em}
+.total{margin-top:20px;padding-top:16px;border-top:1px solid var(--bronze);display:flex;justify-content:space-between;align-items:baseline}
+.total span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--bronze)}
+.total strong{font-size:27px;font-weight:400;font-family:"Ivy Presto Headline",Prata,Georgia,serif;letter-spacing:.02em}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.btn{border:1px solid var(--mple);background:var(--mple);color:var(--foam);padding:13px 22px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:opacity .2s ease,background .2s ease,color .2s ease;border-radius:0}
+.btn:hover{opacity:.85}
+.btn.ghost{background:transparent;color:var(--mple)}
+.btn.ghost:hover{background:var(--mple);color:var(--foam);opacity:1}
+.btn.small{padding:9px 16px;font-size:10px}
+.hint{margin-top:14px;font-size:11.5px;line-height:1.6;color:var(--mple);opacity:.6}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--mple);color:var(--foam);padding:12px 22px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:60}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+:focus-visible{outline:2px solid var(--bronze);outline-offset:2px}
+.stage :focus-visible{outline-color:var(--shell)}
+.hidden{display:none !important}
+
+@media (max-width:980px){
+  .app{grid-template-columns:1fr;height:auto}
+  .stage{position:sticky;top:0;z-index:10;height:44vh;min-height:320px;padding:16px}
+  .detail{display:none}
+  .stage-foot .brandline{font-size:19px}
+  .panel{overflow:visible}
+  .panel-inner{padding-top:34px}
+  .g2,.tension-row,.charges,.r2,.r3{grid-template-columns:1fr}
+  .stats,.statgrid{grid-template-columns:repeat(2,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+  .panel{scroll-behavior:auto}
+}
+
+.print-only{display:none}
+@media print{
+  @page{size:A5 landscape;margin:12mm}
+  body{background:#fff}
+  .app,.toast{display:none !important}
+  .print-only{display:block;color:#003087;font-family:Geologica,sans-serif}
+  .print-only .ph{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #8E7A6B;padding-bottom:9px}
+  .print-only .ph .n{font-family:"Ivy Presto Headline",Prata,serif;font-size:21px}
+  .print-only .ph .id{font-size:11px;letter-spacing:.1em;color:#8E7A6B}
+  .print-only dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;margin-top:14px;font-size:12px}
+  .print-only dt{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8E7A6B}
+  .print-only dd{margin:0}
+  .print-only .pf{margin-top:16px;border-top:1px solid #CFCDC9;padding-top:8px;font-size:9px;letter-spacing:.03em;color:#8E7A6B}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <section class="stage">
+    <div class="stage-head t-highlight">
+      <div class="club">Aphrodite Hills · Racket Club</div>
+      <div class="job" id="jobId">—</div>
+    </div>
+
+    <div class="racket-wrap">
+      <svg id="racket" viewBox="-128 -158 256 566" role="img" aria-labelledby="racketTitle">
+        <title id="racketTitle">Racket preview</title>
+        <path class="strings mains" id="rMains"></path>
+        <path class="strings crosses" id="rCross"></path>
+        <path class="frame-inner" id="rFrameIn"></path>
+        <path class="frame" id="rFrame"></path>
+        <path class="frame" id="rBridge"></path>
+        <path class="frame" id="rHandle"></path>
+        <path class="grip-wrap" id="rGrip"></path>
+      </svg>
+    </div>
+
+    <div class="detail">
+      <svg viewBox="-40 -40 80 80" id="crossSection" aria-hidden="true"></svg>
+      <div class="cap t-info" id="crossCap">Choose a string</div>
+    </div>
+
+    <div class="stage-foot">
+      <div class="brandline t-title" id="stageBrand">Your racket</div>
+      <div class="setup t-info" id="stageSetup"><span>No string selected</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+   <div class="panel-inner">
+
+    <header class="masthead">
+      <div class="eyebrow t-highlight">Re-stringing service</div>
+      <h1 class="t-title">Book your racket in.</h1>
+      <p class="t-body">Tell us what you play with and how you want it strung. We string in-house at the Racket Club — most rackets are ready the same day.</p>
+    </header>
+
+    <section class="block">
+      <span class="tag t-highlight">Player</span>
+      <h2 class="t-title">Who are we stringing for?</h2>
+      <div class="grid g2">
+        <label class="field"><span>Full name</span>
+          <input class="ctl t-info" id="fName" type="text" placeholder="Maria Georgiou" autocomplete="name"></label>
+        <label class="field"><span>Mobile</span>
+          <input class="ctl t-info" id="fPhone" type="tel" placeholder="99 000 000" autocomplete="tel"></label>
+      </div>
+    </section>
+
+    <section class="block">
+      <span class="tag t-highlight">Racket</span>
+      <h2 class="t-title">The frame.</h2>
+      <p class="lede t-body">Pick the brand and the drawing on the left will match your frame shape and string pattern.</p>
+      <div class="chips" id="brandChips" role="group" aria-label="Racket brand"></div>
+      <div style="margin-top:22px;max-width:340px">
+        <label class="field"><span>Model</span>
+          <input class="ctl t-info" id="fModel" type="text" placeholder="Pro Staff 97"></label>
+      </div>
+    </section>
+
+    <section class="block">
+      <span class="tag t-highlight">String</span>
+      <h2 class="t-title">The string.</h2>
+      <p class="lede t-body">Bring your own set, or choose from what we have on the rack today. Every string trades something off — tell us what matters most and we'll put the closest ones first.</p>
+
+      <div class="chips" id="sourceChips" role="group" aria-label="String source" style="margin-bottom:22px"></div>
+
+      <div id="ownBox" class="hidden">
+        <div class="grid g2">
+          <label class="field"><span>What have you brought?</span>
+            <input class="ctl t-info" id="fOwnName" type="text" placeholder="Luxilon ALU Power 1.25"></label>
+          <label class="field"><span>Construction</span>
+            <select class="ctl t-info" id="fOwnType">
+              <option value="poly-round">Polyester — smooth</option>
+              <option value="poly-shaped">Polyester — shaped or textured</option>
+              <option value="multi">Multifilament</option>
+              <option value="gut">Natural gut</option>
+              <option value="syn">Synthetic gut</option>
+              <option value="unknown" selected>Not sure</option>
+            </select></label>
+        </div>
+        <p class="advice t-body" style="margin-top:18px">Hand the set in at reception with the racket. Labour only — <span id="ownLabour">€20</span>.</p>
+      </div>
+
+      <div id="stockBox">
+        <div class="chips filters" id="needChips" role="group" aria-label="What matters most"></div>
+        <div class="cards" id="stringCards"></div>
+
+        <div style="margin-top:26px">
+          <div class="chips" id="hybridChips" role="group" aria-label="Hybrid setup"></div>
+          <div id="hybridBox" class="hidden" style="margin-top:18px">
+            <p class="advice t-body">A hybrid puts one string in the mains and another in the crosses. The card you selected above is your <strong>mains</strong>. Choose your crosses:</p>
+            <label class="field" style="margin-top:16px"><span>Cross string</span>
+              <select class="ctl t-info" id="fCross"></select></label>
+          </div>
+        </div>
+
+        <div style="margin-top:26px">
+          <button class="link" type="button" id="mgrOpen">Manage stock and prices</button>
+        </div>
+
+        <!-- ---------- staff: stock manager ---------- -->
+        <div class="mgr hidden" id="stockMgr">
+          <div class="mgr-head">
+            <h3 class="t-title">Stock and prices.</h3>
+            <button class="link" type="button" id="mgrClose">Done</button>
+          </div>
+          <p class="lede t-body">Untick a string to hide it from customers while you're out of it — it stays on this list so you can put it back. Prices are the full re-string price, string and labour together.</p>
+
+          <ul class="sm-list" id="smList"></ul>
+
+          <div class="charges">
+            <label class="field"><span>Customer's own string</span>
+              <input class="ctl t-info" id="cOwn" type="number" min="0" step="1"></label>
+            <label class="field"><span>Hybrid surcharge</span>
+              <input class="ctl t-info" id="cHybrid" type="number" min="0" step="1"></label>
+            <label class="field"><span>Stringers</span>
+              <input class="ctl t-info" id="cStringers" placeholder="Kyle, Andreas"></label>
+          </div>
+
+          <button class="btn ghost small t-highlight" type="button" id="smAddToggle">Add a string</button>
+
+          <div class="addform hidden" id="smForm">
+            <div class="row r3">
+              <label class="field"><span>Brand</span><input class="ctl t-info" id="nBrand" placeholder="Yonex"></label>
+              <label class="field"><span>Name</span><input class="ctl t-info" id="nName" placeholder="Poly Tour Pro"></label>
+              <label class="field"><span>Gauge (mm)</span><input class="ctl t-info" id="nGauge" placeholder="1.25"></label>
+            </div>
+            <div class="row r3">
+              <label class="field"><span>Construction</span>
+                <select class="ctl t-info" id="nKind">
+                  <option value="poly-round">Polyester — smooth</option>
+                  <option value="poly-shaped">Polyester — shaped</option>
+                  <option value="multi">Multifilament</option>
+                  <option value="gut">Natural gut</option>
+                  <option value="syn">Synthetic gut</option>
+                </select></label>
+              <label class="field"><span>Price (€)</span><input class="ctl t-info" id="nPrice" type="number" min="0" step="1" placeholder="30"></label>
+              <label class="field"><span>Tension range (kg)</span>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <input class="ctl t-info" id="nLo" type="number" min="15" max="35" placeholder="22" style="text-align:center">
+                  <span style="opacity:.5">to</span>
+                  <input class="ctl t-info" id="nHi" type="number" min="15" max="35" placeholder="25" style="text-align:center">
+                </div></label>
+            </div>
+            <div class="row">
+              <label class="field"><span>Why a customer would pick it</span>
+                <textarea class="ctl t-body" id="nFor" placeholder="Written for someone who doesn't know strings — plain language, one or two sentences."></textarea></label>
+            </div>
+            <div class="row">
+              <label class="field"><span>The trade-off</span>
+                <input class="ctl t-info" id="nNote" placeholder="What it isn't good at."></label>
+            </div>
+            <div class="row">
+              <span style="font-size:10px;color:var(--bronze);text-transform:uppercase;letter-spacing:.1em">Ratings, 1 to 10</span>
+              <div class="statgrid" id="nStats"></div>
+            </div>
+            <div class="mgr-actions">
+              <button class="btn small t-highlight" type="button" id="smSave">Add to the rack</button>
+              <button class="btn ghost small t-highlight" type="button" id="smCancel">Cancel</button>
+            </div>
+          </div>
+
+          <div class="mgr-actions">
+            <button class="btn ghost small t-highlight" type="button" id="smCopy">Copy list for GitHub</button>
+            <button class="btn ghost small t-highlight" type="button" id="smReset">Reset to the file</button>
+          </div>
+          <p class="hint t-body">Changes are saved on this computer straight away. To make them the same for everyone — including guests on their phones — press <strong>Copy list for GitHub</strong> and paste the result over the marked block in <code>index.html</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <span class="tag t-highlight">Tension</span>
+      <h2 class="t-title">How tight?</h2>
+      <p class="lede t-body">Lower tension gives you more power and a softer feel. Higher tension gives you more control and a smaller margin for error. If you're unsure, leave it where we've set it.</p>
+      <div class="chips" id="unitChips" role="group" aria-label="Units" style="margin-bottom:22px"></div>
+      <div class="tension-row">
+        <label class="field"><span>Mains (up and down)</span>
+          <div class="stepper">
+            <button type="button" data-t="m" data-d="-1" aria-label="Lower mains tension">−</button>
+            <div class="val t-title" id="valMains">24<small>kg</small></div>
+            <button type="button" data-t="m" data-d="1" aria-label="Raise mains tension">+</button>
+          </div></label>
+        <label class="field"><span>Crosses (across)</span>
+          <div class="stepper">
+            <button type="button" data-t="c" data-d="-1" aria-label="Lower cross tension">−</button>
+            <div class="val t-title" id="valCross">23<small>kg</small></div>
+            <button type="button" data-t="c" data-d="1" aria-label="Raise cross tension">+</button>
+          </div></label>
+      </div>
+      <p class="advice t-body" id="tensionAdvice">Choose a string and we'll suggest a starting tension.</p>
+    </section>
+
+    <section class="block">
+      <span class="tag t-highlight">Collection</span>
+      <h2 class="t-title">When do you need it?</h2>
+      <p class="lede t-body">Most rackets are back on the rack within a day. If you need it sooner, ask at the desk and we'll see what we can do.</p>
+      <div class="grid g2">
+        <label class="field"><span>Ready by — date</span>
+          <input class="ctl t-info" id="fDate" type="date"></label>
+        <label class="field"><span>Ready by — time</span>
+          <select class="ctl t-info" id="fTime">
+            <option>09:00</option><option>11:00</option><option selected>13:00</option>
+            <option>15:00</option><option>17:00</option><option>19:00</option>
+          </select></label>
+      </div>
+      <div class="grid g2" style="margin-top:16px">
+        <label class="field"><span>Stringer</span>
+          <select class="ctl t-info" id="fStringer"></select></label>
+      </div>
+      <label class="field" style="margin-top:16px"><span>Anything else we should know?</span>
+        <textarea class="ctl t-body" id="fNotes" placeholder="Cracked grommet at 3 o'clock, please replace the overgrip, etc."></textarea></label>
+    </section>
+
+    <div class="ticket">
+      <h2 class="t-title">Your job card.</h2>
+      <dl id="ticketList"></dl>
+      <div class="total">
+        <span class="t-highlight">Total</span>
+        <strong id="ticketTotal">€0</strong>
+      </div>
+      <div class="actions">
+        <button class="btn t-highlight" type="button" id="btnCopy">Copy row for the log</button>
+        <button class="btn ghost t-highlight" type="button" id="btnCsv">Download CSV</button>
+        <button class="btn ghost t-highlight" type="button" id="btnPrint">Print job card</button>
+      </div>
+      <p class="hint t-body">“Copy row for the log” fills the tracking sheet from <strong>Name / Surname</strong> across to <strong>Status</strong>. Click the name cell on the first empty row and press Ctrl+V — the receipt number column is left alone for you to fill in by hand. The printed job card is sized for A5 and goes on the racket.</p>
+    </div>
+
+   </div>
+  </section>
+</div>
+
+<div class="toast t-highlight" id="toast">Copied</div>
+<div class="print-only" id="printCard"></div>
+
+<script>
+/* ============================================================
+   ▼▼▼ EDIT BELOW — stock, prices and frames ▼▼▼
+   The stock manager in the page writes a replacement for this
+   block. Paste it over the two constants and commit.
+   ============================================================ */
+
+const CONFIG = {
+  cur: '€',
+  ownPrice: 20,               // customer brings their own set — labour only
+  hybridFee: 3,               // extra labour for a two-string hybrid
+  stringers: ['Kyle'],        // who does the stringing — shown in the Stringer list
+  opening: '08:00 – 19:00'
+};
+
+const STRINGS = [
+  { id:'bab-synthetic', brand:'Babolat', name:'Synthetic', gauge:'1.30', type:'Synthetic gut', texture:'syn', price:25, kg:[24,27], available:false,
+    stats:{control:6,spin:5,power:7,comfort:7,durability:6,feel:6},
+    for:"Soft, forgiving and inexpensive. The right answer for juniors, beginners, and anyone playing a couple of times a week on holiday.",
+    note:"A heavy topspin game will chew through it." },
+
+  { id:'wil-polypro', brand:'Wilson', name:'Poly Pro', gauge:'1.25', type:'Co-polyester', texture:'poly-round', price:25, kg:[22,25], available:true,
+    stats:{control:8,spin:6,power:4,comfort:3,durability:8,feel:5},
+    for:"A firm, no-nonsense polyester with low power and a very controlled response. The sensible choice if you hit hard, go through strings quickly, and don't want to spend much.",
+    note:"Stiff. If your elbow or shoulder gives you trouble, look at the 4G Soft instead." },
+
+  { id:'bab-prolast', brand:'Babolat', name:'Pro Last', gauge:'1.25', type:'Co-polyester', texture:'poly-round', price:30, kg:[22,25], available:true,
+    stats:{control:8,spin:6,power:4,comfort:4,durability:9,feel:5},
+    for:"Built to survive. It lasts longer than most polyesters, which makes it a good fit for juniors and long, fast swings that would otherwise be back at the desk every fortnight.",
+    note:"Durability costs you feel — it plays firm and a little muted." },
+
+  { id:'bab-hurricane', brand:'Babolat', name:'Hurricane', gauge:'1.25', type:'Co-polyester', texture:'poly-shaped', price:30, kg:[22,25], available:true,
+    stats:{control:8,spin:8,power:5,comfort:4,durability:7,feel:6},
+    for:"A textured polyester that grips the ball. If you play with heavy topspin and want the ball to drop inside the baseline, start here.",
+    note:"Firm on the arm, and it drops a little tension in the first few hours before it settles." },
+
+  { id:'bab-rpmblast', brand:'Babolat', name:'RPM Blast', gauge:'1.25', type:'Co-polyester', texture:'poly-shaped', price:40, kg:[22,25], available:false,
+    stats:{control:8,spin:9,power:4,comfort:3,durability:8,feel:6},
+    for:"The octagonal profile bites the ball hard. Made famous on the tour and still the reference point for a heavy, dipping topspin ball.",
+    note:"Stiff, and it settles a lot in the first session. Not a comfort string." },
+
+  { id:'bab-rpmrough', brand:'Babolat', name:'RPM Rough', gauge:'1.25', type:'Co-polyester', texture:'poly-shaped', price:40, kg:[22,25], available:false,
+    stats:{control:8,spin:10,power:4,comfort:3,durability:7,feel:6},
+    for:"RPM Blast with a rougher surface, so it grabs the ball even harder. The most spin we can put in a racket.",
+    note:"The extra texture wears down, so the bite fades before the string breaks." },
+
+  { id:'head-lynxtour', brand:'Head', name:'Lynx Tour', gauge:'1.25', type:'Co-polyester', texture:'poly-shaped', price:35, kg:[21,24], available:true,
+    stats:{control:8,spin:8,power:5,comfort:5,durability:7,feel:7},
+    for:"The most balanced polyester on the rack. Spin and control without the harshness — a good first polyester if you're stepping up from something softer.",
+    note:"Slightly less bite than a dedicated spin string." },
+
+  { id:'wil-revolve', brand:'Wilson', name:'Revolve', gauge:'1.25', type:'Co-polyester', texture:'poly-shaped', price:35, kg:[21,24], available:true,
+    stats:{control:7,spin:9,power:5,comfort:4,durability:7,feel:6},
+    for:"Shaped for spin. A fast swing gets a lot of rotation out of it, so you can hit with more margin over the net and still bring the ball down.",
+    note:"You need racket-head speed to get the benefit — not the string for a short, slow swing." },
+
+  { id:'lux-4gsoft', brand:'Luxilon', name:'4G Soft', gauge:'1.25', type:'Co-polyester', texture:'poly-round', price:55, kg:[22,25], available:true,
+    stats:{control:8,spin:7,power:6,comfort:7,durability:8,feel:8},
+    for:"Softer than anything else on the rack, and it keeps its tension better than all of them — it plays much the same in week three as it did on day one.",
+    note:"Expensive, and it is still a polyester. A multifilament will always be gentler on the arm." },
+
+  { id:'lux-alupower', brand:'Luxilon', name:'Alu Power', gauge:'1.25', type:'Co-polyester', texture:'poly-round', price:55, kg:[22,25], available:false,
+    stats:{control:9,spin:7,power:4,comfort:3,durability:7,feel:7},
+    for:"The tour standard for twenty years. Precise, predictable and stable — the string most players end up on once they start hitting out with confidence.",
+    note:"Stiff. Not the choice if your arm gives you trouble." }
+];
+
+const BRANDS = {
+  'Wilson':     { n:2.05, a:104, b:138, throat:.55, beam:7, mains:16, crosses:19 },
+  'Babolat':    { n:2.35, a:102, b:143, throat:.74, beam:8, mains:16, crosses:19 },
+  'Head':       { n:2.20, a:100, b:145, throat:.46, beam:8, mains:16, crosses:19 },
+  'Yonex':      { n:3.05, a:109, b:134, throat:.60, beam:7, mains:16, crosses:19 },
+  'Prince':     { n:2.10, a:111, b:140, throat:.38, beam:9, mains:16, crosses:19 },
+  'Tecnifibre': { n:2.25, a:102, b:140, throat:.64, beam:7, mains:16, crosses:19 },
+  'Dunlop':     { n:2.15, a:103, b:139, throat:.58, beam:8, mains:16, crosses:19 },
+  'Other':      { n:2.20, a:103, b:140, throat:.55, beam:8, mains:16, crosses:19 }
+};
+
+/* ============================================================
+   ▲▲▲ EDIT ABOVE ▲▲▲
+   ============================================================ */
+
+const NEEDS = [
+  { id:'all',        label:'Show everything' },
+  { id:'control',    label:'More control' },
+  { id:'spin',       label:'More spin' },
+  { id:'power',      label:'More power' },
+  { id:'comfort',    label:'Kinder on my arm' },
+  { id:'durability', label:'I keep breaking strings' }
+];
+const STAT_KEYS = ['control','spin','power','comfort','durability','feel'];
+const KIND_LABEL = {
+  'poly-round':'Co-polyester', 'poly-shaped':'Co-polyester',
+  'multi':'Multifilament', 'gut':'Natural gut', 'syn':'Synthetic gut'
+};
+
+const S = {
+  brand:'Wilson', source:'stock', need:'all',
+  stringId:null, crossId:null, hybrid:false, ownType:'unknown',
+  unit:'kg', mains:24, cross:23, touched:false
+};
+
+const $ = s => document.querySelector(s);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ============================================================
+   STOCK — live copy, saved to this device
+   ============================================================ */
+const KEY = 'ah-restring-stock-v1';
+let STOCK = [], CHARGES = {};
+function loadSaved(){
+  try{ const raw = localStorage.getItem(KEY);
+       if(raw){ const o = JSON.parse(raw); if(Array.isArray(o.strings) && o.charges) return o; } }
+  catch(e){}
+  return null;
+}
+function persist(){
+  try{ localStorage.setItem(KEY, JSON.stringify({strings:STOCK, charges:CHARGES})); }catch(e){}
+}
+function resetStock(){
+  STOCK = STRINGS.map(s=>JSON.parse(JSON.stringify(s)));
+  CHARGES = { own:CONFIG.ownPrice, hybrid:CONFIG.hybridFee, stringers:CONFIG.stringers.slice() };
+}
+function onRack(){ return STOCK.filter(s=>s.available!==false); }
+function byId(id){ return STOCK.find(s=>s.id===id); }
+
+/* ============================================================
+   RACKET
+   ============================================================ */
+const BRIDGE = 0.84;                 // where the throat bridge crosses the head
+const geo = Object.assign({}, BRANDS[S.brand]);
+let geoFrom = Object.assign({}, geo), geoTarget = Object.assign({}, geo);
+let tweenT = 1, rippleT = -1, rippleAmp = 0, rippleBase = 0, raf = null;
+const TWEEN_KEYS = ['n','a','b','throat','beam'];
+
+const el = {
+  frame:$('#rFrame'), frameIn:$('#rFrameIn'), bridge:$('#rBridge'),
+  mains:$('#rMains'), cross:$('#rCross'), handle:$('#rHandle'), grip:$('#rGrip')
+};
+
+function sePoint(a,b,n,t){
+  const c=Math.cos(t), s=Math.sin(t);
+  return [Math.sign(c)*Math.pow(Math.abs(c),2/n)*a, Math.sign(s)*Math.pow(Math.abs(s),2/n)*b];
+}
+function seArc(a,b,n,t0,t1,steps){
+  let d='';
+  for(let i=0;i<=steps;i++){
+    const t=t0+(t1-t0)*(i/steps);
+    const [x,y]=sePoint(a,b,n,t);
+    d += (i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2);
+  }
+  return d;
+}
+function bridgeAt(p){
+  const tB = Math.asin(Math.min(1, Math.pow(BRIDGE, p.n/2)));
+  const [xB,yB] = sePoint(p.a,p.b,p.n,tB);
+  return { tB, xB, yB, hy: p.b + 112 };
+}
+/* the bed deflects when tension changes; softer at low tension */
+const RC = [0,-34];
+function ripple(x,y){
+  if(rippleAmp===0) return [x,y];
+  const dx=x-RC[0], dy=y-RC[1];
+  const g=Math.exp(-(dx*dx+dy*dy)/(2*72*72));
+  const k=1+rippleAmp*g*0.045;
+  return [RC[0]+dx*k, RC[1]+dy*k];
+}
+function tex(kind,u,i){
+  switch(kind){
+    case 'poly-shaped': return (Math.abs(((u/7)+i*.37)%1-.5)-.25)*2.8;
+    case 'multi':       return Math.sin(u/8 + i*1.7)*0.85;
+    case 'gut':         return Math.sin(u/26 + i)*0.35;
+    default:            return 0;
+  }
+}
+function buildBed(p, texMains, texCross){
+  const ai=p.a-p.beam-3, bi=p.b-p.beam-3, n=p.n;
+  const yBed = bridgeAt(p).yB - p.beam - 5;
+  const half=(v,lim)=>Math.pow(Math.max(0,1-Math.pow(Math.abs(v)/lim,n)),1/n);
+  let dm='', dc='';
+
+  const spanX = ai*0.84;
+  for(let i=0;i<p.mains;i++){
+    const x = -spanX + 2*spanX*(i/(p.mains-1));
+    const yh = bi*half(x,ai);
+    const yTop = -yh, yBot = Math.min(yh, yBed);
+    if(yBot<=yTop) continue;
+    let d='';
+    for(let s=0;s<=26;s++){
+      const y = yTop + (yBot-yTop)*(s/26);
+      const [px,py] = ripple(x + tex(texMains,y,i), y);
+      d += (s?'L':'M')+px.toFixed(2)+' '+py.toFixed(2);
+    }
+    dm += d;
+  }
+  const y0=-bi*0.90, y1=yBed;
+  for(let i=0;i<p.crosses;i++){
+    const y = y0 + (y1-y0)*(i/(p.crosses-1));
+    const xh = ai*half(y,bi);
+    let d='';
+    for(let s=0;s<=26;s++){
+      const x = -xh + 2*xh*(s/26);
+      const [px,py] = ripple(x, y + tex(texCross,x,i));
+      d += (s?'L':'M')+px.toFixed(2)+' '+py.toFixed(2);
+    }
+    dc += d;
+  }
+  return [dm,dc];
+}
+/* One continuous stroke: up the right leg, round the hoop, down the left leg —
+   the way the frame is actually made. The bridge is a separate piece. */
+function buildFrame(p){
+  const {tB,xB,yB,hy} = bridgeAt(p);
+  const [x2,y2] = sePoint(p.a,p.b,p.n,tB+0.02);
+  let dx=x2-xB, dy=y2-yB;
+  const L = Math.hypot(dx,dy)||1; dx/=L; dy/=L;
+  const legL = (hy-yB)*(0.26 + p.throat*0.16);
+  const c1x = xB+dx*legL, c1y = yB+dy*legL, c2y = hy-60;
+
+  const hoop = seArc(p.a,p.b,p.n,tB,-(Math.PI+tB),150).replace(/^M[-\d.]+ [-\d.]+/,'');
+  const frame =
+    `M11 ${hy.toFixed(1)}C11 ${c2y.toFixed(1)},${c1x.toFixed(1)} ${c1y.toFixed(1)},${xB.toFixed(1)} ${yB.toFixed(1)}`
+    + hoop
+    + `C${(-c1x).toFixed(1)} ${c1y.toFixed(1)},-11 ${c2y.toFixed(1)},-11 ${hy.toFixed(1)}`;
+
+  const inner  = seArc(p.a-p.beam,p.b-p.beam,p.n,tB+0.10,-(Math.PI+tB+0.10),150);
+  const bridge = `M${xB.toFixed(1)} ${yB.toFixed(1)}Q0 ${(yB+13).toFixed(1)} ${(-xB).toFixed(1)} ${yB.toFixed(1)}`;
+  const handle =
+    `M-11 ${hy.toFixed(1)}L-11 ${(hy+112).toFixed(1)}`+
+    `C-11 ${(hy+121).toFixed(1)},-14 ${(hy+122).toFixed(1)},-14 ${(hy+128).toFixed(1)}`+
+    `L14 ${(hy+128).toFixed(1)}`+
+    `C14 ${(hy+122).toFixed(1)},11 ${(hy+121).toFixed(1)},11 ${(hy+112).toFixed(1)}`+
+    `L11 ${hy.toFixed(1)}`;
+  let grip='';
+  for(let i=0;i<9;i++){ const y=hy+12+i*11; grip += `M-11 ${y.toFixed(1)}L11 ${(y-7).toFixed(1)}`; }
+  return {frame,inner,bridge,handle,grip};
+}
+function textureOf(id){ const s = byId(id); return s ? s.texture : 'poly-round'; }
+function strokeOf(kind){
+  return {'poly-round':1.5,'poly-shaped':1.6,'multi':1.95,'gut':2.15,'syn':1.75,'unknown':1.6}[kind]||1.6;
+}
+function draw(){
+  const tm = S.source==='own' ? S.ownType : textureOf(S.stringId);
+  const tc = S.source==='own' ? S.ownType : textureOf(S.hybrid ? (S.crossId||S.stringId) : S.stringId);
+  const [dm,dc] = buildBed(geo,tm,tc);
+  const f = buildFrame(geo);
+  el.mains.setAttribute('d',dm);
+  el.cross.setAttribute('d',dc);
+  el.frame.setAttribute('d',f.frame);
+  el.frameIn.setAttribute('d',f.inner);
+  el.bridge.setAttribute('d',f.bridge);
+  el.handle.setAttribute('d',f.handle);
+  el.grip.setAttribute('d',f.grip);
+  el.mains.style.strokeWidth = strokeOf(tm);
+  el.cross.style.strokeWidth = strokeOf(tc);
+  const unstrung = S.source==='stock' && !S.stringId;
+  el.mains.classList.toggle('ghost',unstrung);
+  el.cross.classList.toggle('ghost',unstrung);
+}
+function loop(){
+  let alive=false;
+  if(tweenT<1){
+    tweenT = Math.min(1, tweenT + 1/38);
+    const e = 1-Math.pow(1-tweenT,3);
+    TWEEN_KEYS.forEach(k=>{ geo[k] = geoFrom[k] + (geoTarget[k]-geoFrom[k])*e; });
+    alive = tweenT<1;
+  }
+  if(rippleT>=0){
+    rippleT += 16;
+    rippleAmp = rippleBase*Math.exp(-rippleT/230)*Math.cos(rippleT/62);
+    if(rippleT>900){ rippleT=-1; rippleAmp=0; } else alive=true;
+  }
+  draw();
+  raf = alive ? requestAnimationFrame(loop) : null;
+}
+function morphTo(brand){
+  geoTarget = Object.assign({},BRANDS[brand]);
+  geo.mains = geoTarget.mains; geo.crosses = geoTarget.crosses;
+  if(reduce){ Object.assign(geo,geoTarget); draw(); return; }
+  geoFrom = Object.assign({},geo);
+  tweenT = 0; if(!raf) raf = requestAnimationFrame(loop);
+}
+function ping(){
+  if(reduce) return;
+  const kg = S.unit==='kg' ? S.mains : S.mains/2.2046;
+  rippleBase = Math.max(0.5, Math.min(2.2, (30-kg)*0.28));
+  rippleT = 0; if(!raf) raf = requestAnimationFrame(loop);
+}
+
+function drawCrossSection(){
+  const svg=$('#crossSection'), cap=$('#crossCap');
+  if(S.source==='stock' && !S.stringId){
+    svg.innerHTML = '<circle class="cs" cx="0" cy="0" r="28" stroke-dasharray="3 5" opacity=".5"/>';
+    cap.textContent = "Choose a string to see how it's built.";
+    return;
+  }
+  const kind = S.source==='own' ? S.ownType : textureOf(S.stringId);
+  let g = '<circle class="cs" cx="0" cy="0" r="28"/>';
+  if(kind==='poly-shaped'){
+    const pts=[];
+    for(let i=0;i<8;i++){ const t=(i/8)*Math.PI*2-Math.PI/8;
+      pts.push(`${(Math.cos(t)*28).toFixed(1)},${(Math.sin(t)*28).toFixed(1)}`); }
+    g = `<polygon class="cs" points="${pts.join(' ')}"/>`;
+  } else if(kind==='multi'){
+    [[0,0,9],[13,6,7],[-12,8,7],[6,-14,6],[-9,-12,6],[16,-8,5],[-17,-3,5],[3,16,6],[-4,-2,5],[10,15,4],[-14,16,4],[18,4,4]]
+      .forEach(([x,y,r])=>{ g += `<circle class="cs-fine" cx="${x}" cy="${y}" r="${r}"/>`; });
+  } else if(kind==='gut'){
+    for(let i=-6;i<=6;i++){ const x=i*4, h=Math.sqrt(Math.max(0,784-x*x))-2;
+      g += `<path class="cs-fine" d="M${x} ${-h} L${x} ${h}"/>`; }
+  } else if(kind==='syn'){
+    g += '<circle class="cs-fine" cx="0" cy="0" r="15"/>';
+    for(let i=0;i<16;i++){ const t=(i/16)*Math.PI*2;
+      g += `<path class="cs-fine" d="M${(Math.cos(t)*15).toFixed(1)} ${(Math.sin(t)*15).toFixed(1)} L${(Math.cos(t)*28).toFixed(1)} ${(Math.sin(t)*28).toFixed(1)}"/>`; }
+  } else if(kind==='poly-round'){
+    g += '<circle class="cs-fine" cx="0" cy="0" r="19"/>';
+  }
+  svg.innerHTML = g;
+  const tail = {
+    'poly-shaped':'the edges grip the ball for spin',
+    'poly-round':'one solid strand, stiff and stable',
+    'multi':'thousands of fibres bonded together, soft and springy',
+    'gut':'natural fibre, laid and twisted',
+    'syn':'a solid core wrapped in an outer layer',
+    'unknown':'tell us the construction and we\u2019ll show it'
+  }[kind];
+  const st = byId(S.stringId);
+  cap.textContent = (S.source==='stock' && st)
+    ? `${st.type} · ${st.gauge} mm — ${tail}` : tail.charAt(0).toUpperCase()+tail.slice(1)+'.';
+}
+
+/* ============================================================
+   CHIPS
+   ============================================================ */
+function chipGroup(host,items,isOn,onPick,soft){
+  host.innerHTML='';
+  items.forEach(it=>{
+    const b=document.createElement('button');
+    b.type='button'; b.className='chip t-info'+(soft?' soft':'');
+    b.textContent=it.label; b.setAttribute('aria-pressed',String(isOn(it)));
+    b.onclick=()=>onPick(it);
+    host.appendChild(b);
+  });
+}
+function syncChips(host,isOn,items){
+  [...host.children].forEach((b,i)=> b.setAttribute('aria-pressed',String(isOn(items[i]))));
+}
+const brandItems  = Object.keys(BRANDS).map(k=>({id:k,label:k}));
+const sourceItems = [{id:'stock',label:'Choose from our stock'},{id:'own',label:"I've brought my own"}];
+const unitItems   = [{id:'kg',label:'Kilograms'},{id:'lb',label:'Pounds'}];
+const hybridItems = [{id:'hybrid',label:'Set up as a hybrid'}];
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+function renderCards(){
+  const host=$('#stringCards');
+  let list=onRack();
+  if(S.need!=='all') list=[...list].sort((a,b)=> b.stats[S.need]-a.stats[S.need] || a.price-b.price);
+  host.innerHTML='';
+  if(!list.length){
+    host.innerHTML = '<div class="empty t-body">Nothing on the rack right now. Bring your own set, or ask at the desk.</div>';
+    return;
+  }
+  list.forEach(s=>{
+    const b=document.createElement('button');
+    b.type='button'; b.className='card'; b.setAttribute('aria-pressed',String(S.stringId===s.id));
+    b.innerHTML=`
+      <div class="card-top">
+        <div>
+          <div class="card-name t-title">${s.brand} ${s.name}</div>
+          <div class="card-meta t-highlight">${s.type} · ${s.gauge} mm</div>
+        </div>
+        <div class="card-price t-info">${CONFIG.cur}${s.price}</div>
+      </div>
+      <p class="card-for t-body">${s.for}</p>
+      <p class="card-note t-body">${s.note}</p>
+      <div class="stats">
+        ${STAT_KEYS.map(k=>`<div class="stat"><b>${k}</b><div class="bar"><i style="width:${(s.stats[k]||5)*10}%"></i></div></div>`).join('')}
+      </div>`;
+    b.onclick=()=>{
+      S.stringId=s.id;
+      if(!S.touched){
+        const mid=Math.round((s.kg[0]+s.kg[1])/2);
+        S.mains = S.unit==='kg'? mid : Math.round(mid*2.2046);
+        S.cross = S.mains - (S.unit==='kg'?1:2);
+      }
+      renderCards(); renderCrossOptions(); drawCrossSection(); ping(); render();
+    };
+    host.appendChild(b);
+  });
+}
+function renderCrossOptions(){
+  const sel=$('#fCross');
+  const opts = onRack().filter(s=>s.id!==S.stringId);
+  sel.innerHTML = opts.map(s=>`<option value="${s.id}"${S.crossId===s.id?' selected':''}>${s.brand} ${s.name} · ${CONFIG.cur}${s.price}</option>`).join('');
+  if(!opts.some(s=>s.id===S.crossId)) S.crossId = opts.length ? opts[0].id : null;
+}
+
+/* ============================================================
+   STOCK MANAGER
+   ============================================================ */
+function renderManager(){
+  const list=$('#smList');
+  list.innerHTML='';
+  STOCK.forEach(s=>{
+    const li=document.createElement('li');
+    li.innerHTML=`
+      <label class="sm-toggle"><input type="checkbox" ${s.available!==false?'checked':''}> on the rack</label>
+      <span class="sm-name"><strong>${s.brand} ${s.name}</strong><em>${s.type} · ${s.gauge} mm</em></span>
+      <span class="sm-price">${CONFIG.cur}<input type="number" min="0" step="1" value="${s.price}" aria-label="Price for ${s.brand} ${s.name}"></span>
+      <button class="sm-del" type="button" title="Remove ${s.brand} ${s.name}" aria-label="Remove ${s.brand} ${s.name}">✕</button>`;
+    li.querySelector('input[type=checkbox]').onchange = e =>{
+      s.available = e.target.checked;
+      if(!s.available && S.stringId===s.id) S.stringId=null;
+      afterStockChange();
+    };
+    li.querySelector('input[type=number]').onchange = e =>{
+      s.price = Math.max(0, Math.round(+e.target.value||0));
+      afterStockChange();
+    };
+    li.querySelector('.sm-del').onclick = ()=>{
+      if(!confirm(`Remove ${s.brand} ${s.name} from the list?`)) return;
+      STOCK = STOCK.filter(x=>x.id!==s.id);
+      if(S.stringId===s.id) S.stringId=null;
+      if(S.crossId===s.id) S.crossId=null;
+      afterStockChange();
+    };
+    list.appendChild(li);
+  });
+  $('#cOwn').value=CHARGES.own; $('#cHybrid').value=CHARGES.hybrid;
+  $('#cStringers').value=(CHARGES.stringers||[]).join(', ');
+}
+function afterStockChange(){
+  persist(); renderManager(); renderCards(); renderCrossOptions(); renderStringers();
+  drawCrossSection(); draw(); render();
+}
+function renderStringers(){
+  const sel=$('#fStringer'), keep=sel.value;
+  const names = (CHARGES.stringers||[]).filter(Boolean);
+  sel.innerHTML = ['<option value="">—</option>']
+    .concat(names.map(n=>`<option${n===keep?' selected':''}>${n}</option>`)).join('');
+  if(!keep && names.length===1) sel.value = names[0];
+}
+function slug(a,b){
+  return (a+'-'+b).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28);
+}
+function serialise(){
+  const q = v => "'" + String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'") + "'";
+  const lines = STOCK.map(s=>
+`  { id:${q(s.id)}, brand:${q(s.brand)}, name:${q(s.name)}, gauge:${q(s.gauge)}, type:${q(s.type)}, texture:${q(s.texture)}, price:${s.price}, kg:[${s.kg[0]},${s.kg[1]}], available:${s.available!==false},
+    stats:{${STAT_KEYS.map(k=>k+':'+(s.stats[k]||5)).join(',')}},
+    for:${q(s.for)},
+    note:${q(s.note)} }`).join(',\n\n');
+  const names = (CHARGES.stringers||[]).map(n=>q(n)).join(', ');
+  return `const CONFIG = {
+  cur: '€',
+  ownPrice: ${CHARGES.own},               // customer brings their own set — labour only
+  hybridFee: ${CHARGES.hybrid},               // extra labour for a two-string hybrid
+  stringers: [${names}],        // who does the stringing — shown in the Stringer list
+  opening: '${CONFIG.opening}'
+};
+
+const STRINGS = [
+${lines}
+];`;
+}
+
+/* ============================================================
+   PRICING, TICKET, RENDER
+   ============================================================ */
+function kgOf(v){ return S.unit==='kg' ? v : v/2.2046; }
+function mainString(){ return byId(S.stringId); }
+function crossString(){ return S.hybrid ? byId(S.crossId) : mainString(); }
+
+function stringLabel(){
+  if(S.source==='own') return $('#fOwnName').value.trim() || "Customer's own string";
+  const m=mainString(); if(!m) return 'No string selected';
+  const c=crossString();
+  if(S.hybrid && c && c.id!==m.id) return `${m.brand} ${m.name} / ${c.brand} ${c.name}`;
+  return `${m.brand} ${m.name} ${m.gauge}`;
+}
+function priceOf(){
+  let total;
+  if(S.source==='own'){ total = CHARGES.own; }
+  else {
+    const m=mainString(); if(!m) return null;
+    const c=crossString();
+    total = (S.hybrid && c && c.id!==m.id)
+      ? Math.round((m.price+c.price)/2) + CHARGES.hybrid
+      : m.price;
+  }
+  return total;
+}
+function tensionAdvice(){
+  const box=$('#tensionAdvice');
+  box.classList.remove('warn');
+  if(S.source==='own'){
+    box.textContent = "We'll string to the tension you've given. Say so at the desk if you'd rather we suggested one.";
+    return;
+  }
+  const m=mainString();
+  if(!m){ box.textContent="Choose a string and we'll suggest a starting tension."; return; }
+  const kg=kgOf(S.mains), [lo,hi]=m.kg;
+  if(kg<lo-0.6){
+    box.classList.add('warn');
+    box.textContent=`That's below the ${lo}–${hi} kg range we'd normally use for ${m.name}. It'll feel powerful, but the ball may fly long. We'll string it if you're sure.`;
+    return;
+  }
+  if(kg>hi+0.6){
+    box.classList.add('warn');
+    box.textContent=`That's above the ${lo}–${hi} kg range for ${m.name}.`+
+      (m.texture.startsWith('poly') ? ' A stiff polyester strung tight is hard on the arm — we\u2019d suggest coming down a kilo or two.' : ' Expect a firm, low-powered bed.');
+    return;
+  }
+  box.textContent=`${lo}–${hi} kg is the sweet spot for ${m.name}. You're set at ${S.mains}${S.unit} in the mains — a good place to start. Crosses sit a touch lower so the bed stays even.`;
+}
+function ticketRows(){
+  return [
+    ['Player',   $('#fName').value.trim() || '—'],
+    ['Racket',   [S.brand, $('#fModel').value.trim()].filter(Boolean).join(' · ')],
+    ['String',   stringLabel()],
+    ['Source',   S.source==='own' ? 'Customer supplied' : 'Club stock'],
+    ['Tension',  `${S.mains} / ${S.cross} ${S.unit}`],
+    ['Stringer', $('#fStringer').value || '—'],
+    ['Ready by', `${fmtReady($('#fDate').value) || '—'} · ${$('#fTime').value}`],
+    ['Notes',    $('#fNotes').value.trim() || '—']
+  ];
+}
+function render(){
+  $('#ticketList').innerHTML = ticketRows().map(([k,v])=>`<dt class="t-highlight">${k}</dt><dd class="t-info">${v}</dd>`).join('');
+  const p=priceOf();
+  $('#ticketTotal').textContent = p===null ? '—' : CONFIG.cur+p;
+  const model=$('#fModel').value.trim();
+  $('#stageBrand').textContent = model ? `${S.brand} ${model}` : S.brand;
+  $('#stageSetup').innerHTML = `<span>${stringLabel()}</span><span class="sep">/</span><span>${S.mains} / ${S.cross} ${S.unit}</span>`;
+  $('#valMains').innerHTML = `${S.mains}<small>${S.unit}</small>`;
+  $('#valCross').innerHTML = `${S.cross}<small>${S.unit}</small>`;
+  $('#ownLabour').textContent = CONFIG.cur+CHARGES.own;
+  tensionAdvice();
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+chipGroup($('#brandChips'),brandItems,it=>S.brand===it.id,it=>{
+  S.brand=it.id; morphTo(it.id); syncChips($('#brandChips'),i=>S.brand===i.id,brandItems); render();
+});
+chipGroup($('#sourceChips'),sourceItems,it=>S.source===it.id,it=>{
+  S.source=it.id;
+  $('#ownBox').classList.toggle('hidden',it.id!=='own');
+  $('#stockBox').classList.toggle('hidden',it.id!=='stock');
+  syncChips($('#sourceChips'),i=>S.source===i.id,sourceItems);
+  drawCrossSection(); draw(); render();
+});
+chipGroup($('#needChips'),NEEDS,it=>S.need===it.id,it=>{
+  S.need=it.id; syncChips($('#needChips'),i=>S.need===i.id,NEEDS); renderCards();
+},true);
+chipGroup($('#hybridChips'),hybridItems,()=>S.hybrid,()=>{
+  S.hybrid=!S.hybrid;
+  $('#hybridBox').classList.toggle('hidden',!S.hybrid);
+  renderCrossOptions(); syncChips($('#hybridChips'),()=>S.hybrid,hybridItems);
+  draw(); render();
+},true);
+chipGroup($('#unitChips'),unitItems,it=>S.unit===it.id,it=>{
+  if(S.unit===it.id) return;
+  if(it.id==='lb'){ S.mains=Math.round(S.mains*2.2046); S.cross=Math.round(S.cross*2.2046); }
+  else { S.mains=Math.round(S.mains/2.2046); S.cross=Math.round(S.cross/2.2046); }
+  S.unit=it.id; syncChips($('#unitChips'),i=>S.unit===i.id,unitItems); render();
+});
+
+document.querySelectorAll('.stepper button').forEach(b=>{
+  b.onclick=()=>{
+    S.touched=true;
+    const d=+b.dataset.d, lo=S.unit==='kg'?16:35, hi=S.unit==='kg'?32:70;
+    if(b.dataset.t==='m') S.mains=Math.max(lo,Math.min(hi,S.mains+d));
+    else                  S.cross=Math.max(lo,Math.min(hi,S.cross+d));
+    ping(); render();
+  };
+});
+['fName','fPhone','fModel','fDate','fTime','fNotes','fOwnName','fStringer'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#fStringer').addEventListener('change',render);
+$('#fOwnType').addEventListener('change',e=>{ S.ownType=e.target.value; drawCrossSection(); draw(); ping(); });
+$('#fCross').addEventListener('change',e=>{ S.crossId=e.target.value; draw(); render(); });
+
+/* manager */
+$('#mgrOpen').onclick=()=>{ $('#stockMgr').classList.remove('hidden'); renderManager(); $('#stockMgr').scrollIntoView({block:'start'}); };
+$('#mgrClose').onclick=()=>{ $('#stockMgr').classList.add('hidden'); $('#smForm').classList.add('hidden'); };
+['cOwn','cHybrid'].forEach(id=>{
+  $('#'+id).onchange=e=>{
+    CHARGES[id==='cOwn'?'own':'hybrid']=Math.max(0,Math.round(+e.target.value||0));
+    afterStockChange();
+  };
+});
+$('#cStringers').onchange=e=>{
+  CHARGES.stringers=e.target.value.split(',').map(s=>s.trim()).filter(Boolean);
+  afterStockChange();
+};
+$('#nStats').innerHTML = STAT_KEYS.map(k=>
+  `<label class="field"><span>${k}</span><input class="ctl t-info" type="number" min="1" max="10" value="5" data-stat="${k}"></label>`).join('');
+$('#smAddToggle').onclick=()=>$('#smForm').classList.toggle('hidden');
+$('#smCancel').onclick=()=>$('#smForm').classList.add('hidden');
+$('#smSave').onclick=()=>{
+  const brand=$('#nBrand').value.trim(), name=$('#nName').value.trim();
+  if(!brand||!name){ toast('Brand and name are needed'); return; }
+  const kind=$('#nKind').value;
+  const stats={}; document.querySelectorAll('#nStats input').forEach(i=>{
+    stats[i.dataset.stat]=Math.max(1,Math.min(10,+i.value||5)); });
+  let id=slug(brand,name), n=1;
+  while(STOCK.some(s=>s.id===id)) id=slug(brand,name)+'-'+(++n);
+  const lo=+$('#nLo').value||22, hi=+$('#nHi').value||25;
+  STOCK.push({ id, brand, name,
+    gauge: $('#nGauge').value.trim()||'1.25',
+    type: KIND_LABEL[kind], texture: kind,
+    price: Math.max(0,Math.round(+$('#nPrice').value||0)),
+    kg: [Math.min(lo,hi), Math.max(lo,hi)], available:true, stats,
+    for: $('#nFor').value.trim()||'—',
+    note: $('#nNote').value.trim()||'—' });
+  ['nBrand','nName','nGauge','nPrice','nLo','nHi','nFor','nNote'].forEach(i=>$('#'+i).value='');
+  $('#smForm').classList.add('hidden');
+  afterStockChange(); toast('Added to the rack');
+};
+$('#smCopy').onclick=async()=>{
+  const text=serialise();
+  try{ await navigator.clipboard.writeText(text); toast('Copied — paste into index.html'); }
+  catch{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Copied'); }
+};
+$('#smReset').onclick=()=>{
+  if(!confirm('Discard the changes on this computer and go back to the list in the file?')) return;
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  resetStock(); S.stringId=null; S.crossId=null; afterStockChange(); toast('Reset');
+};
+
+/* export */
+/* --- The tracking sheet's columns, in order.
+       Receipt no. is deliberately left off the clipboard row so the copy
+       never touches that cell — you fill it in by hand after pasting. --- */
+const SHEET_HEADERS = ['NAME / SURNAME','TELEPHONE NO.','DATE','RACQUET','STRING','TENSION',
+  'NAME OF STRINGER','READY BY','AMOUNT TO PAY','STATUS','RECEIPT NO.'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmtLogged(d){ return String(d.getDate()).padStart(2,'0')+'-'+MONTHS[d.getMonth()]; }
+function fmtReady(iso){
+  if(!iso) return '';
+  const [y,m,d]=iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function sheetString(){
+  if(S.source==='own') return 'Own String';
+  const m=mainString(); if(!m) return '';
+  return `${m.brand} ${m.name}`;               // matches the sheet's dropdown exactly
+}
+function sheetRacquet(){
+  const model=$('#fModel').value.trim();
+  return model ? `${S.brand} ${model}` : S.brand;
+}
+function row(){
+  const p=priceOf();
+  return [
+    $('#fName').value.trim(),                             // NAME / SURNAME
+    $('#fPhone').value.replace(/\D/g,''),                 // TELEPHONE NO.
+    fmtLogged(new Date()),                                // DATE
+    sheetRacquet(),                                       // RACQUET
+    sheetString(),                                        // STRING
+    S.mains,                                              // TENSION
+    $('#fStringer').value,                                // NAME OF STRINGER
+    fmtReady($('#fDate').value),                          // READY BY
+    p===null ? '' : p,                                    // AMOUNT TO PAY
+    'FALSE'                                               // STATUS
+  ];
+}
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),1900); }
+$('#btnCopy').onclick=async()=>{
+  const line=row().join('\t');
+  try{ await navigator.clipboard.writeText(line); toast('Copied — paste into the sheet'); }
+  catch{ const ta=document.createElement('textarea'); ta.value=line; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Copied'); }
+};
+$('#btnCsv').onclick=()=>{
+  const esc=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const csv=[SHEET_HEADERS.map(esc).join(','),row().concat('').map(esc).join(',')].join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${$('#jobId').textContent}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  toast('CSV downloaded');
+};
+$('#btnPrint').onclick=()=>{
+  $('#printCard').innerHTML=`
+    <div class="ph"><div class="n">Racket re-stringing</div><div class="id">${$('#jobId').textContent}</div></div>
+    <dl>${ticketRows().map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}
+    <dt>Price</dt><dd>${priceOf()===null?'—':CONFIG.cur+priceOf()}</dd></dl>
+    <div class="pf">Aphrodite Hills Racket Club · ${CONFIG.opening} · 3, Aphrodite Avenue, Kouklia 8509 · +357 26 828000</div>`;
+  window.print();
+};
+
+/* boot */
+(function boot(){
+  const saved=loadSaved();
+  resetStock();
+  if(saved){ STOCK=saved.strings; CHARGES=saved.charges; }
+
+  const d=new Date(); d.setDate(d.getDate()+1);
+  $('#fDate').value=d.toISOString().slice(0,10);
+  $('#fDate').min=new Date().toISOString().slice(0,10);
+  const s=new Date(), seq=String(Math.floor(Math.random()*900)+100);
+  $('#jobId').textContent=`AH-RS-${String(s.getFullYear()).slice(2)}${String(s.getMonth()+1).padStart(2,'0')}${String(s.getDate()).padStart(2,'0')}-${seq}`;
+
+  renderCards(); renderCrossOptions(); renderManager(); renderStringers();
+  drawCrossSection(); draw(); render();
+  if(location.hash==='#stock') $('#mgrOpen').click();
+})();
+</script>
+</body>
+</html>
