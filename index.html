@@ -319,6 +319,7 @@ textarea.ctl:focus{border-color:var(--mple)}
             <div class="status t-info" id="epStatus">Not set — requests cannot be saved yet.</div>
             <div class="mgr-actions">
               <button class="btn ghost small t-highlight" type="button" id="smTest">Save a test row</button>
+              <button class="btn ghost small t-highlight" type="button" id="smCheck">Check the connection ↗</button>
             </div>
             <p class="hint t-body">Set this once per device. It stays on this iPad and is never written into the file — anyone who found that URL in a public repository could add rows to your sheet.</p>
           </div>
@@ -985,7 +986,9 @@ async function saveRequest(test){
       done(test, true);
     }catch(err2){
       const lines=ticketRows().map(([k,v])=>k+': '+v).join('\n');
-      $('#manualLead').textContent='Nothing has been saved. Please try again in a moment — everything you entered is still here.';
+      $('#manualLead').textContent = STAFF
+        ? 'Not saved. Open Manage stock and prices and press “Check the connection” — that page will say what is wrong.'
+        : 'Nothing has been saved. Please try again in a moment — everything you entered is still here.';
       showManual(lines, (err && err.message)+' / '+(err2 && err2.message));
       toast('Not saved');
     }
@@ -1137,7 +1140,7 @@ $('#fOwnType').addEventListener('change',e=>{ S.ownType=e.target.value; drawCros
 $('#fCross').addEventListener('change',e=>{ S.crossId=e.target.value; draw(); render(); });
 
 /* manager */
-$('#mgrOpen').onclick=()=>{ $('#stockMgr').classList.remove('hidden'); renderManager(); $('#stockMgr').scrollIntoView({block:'start'}); };
+$('#mgrOpen').onclick=()=>{ const m=$('#stockMgr'); m.classList.remove('hidden'); renderManager(); if(m.scrollIntoView) m.scrollIntoView({block:'start'}); };
 $('#mgrClose').onclick=()=>{ $('#stockMgr').classList.add('hidden'); $('#smForm').classList.add('hidden'); };
 ['cOwn','cHybrid'].forEach(id=>{
   $('#'+id).onchange=e=>{
@@ -1152,7 +1155,17 @@ $('#cStringers').onchange=e=>{
 $('#cEndpoint').onchange=e=>{ ENDPOINT=e.target.value.trim(); persist(); renderEndpointStatus(); };
 
 $('#smTest').onclick=()=>saveRequest(true);
+/* Opens the endpoint in a tab. The browser loads it directly, so CORS cannot
+   interfere — whatever comes back is the truth about the deployment. */
+$('#smCheck').onclick=()=>{
+  if(!ENDPOINT){ toast('Paste the URL first'); return; }
+  window.open(ENDPOINT.split('?')[0],'_blank','noopener');
+};
 
+/* Two ways into reception mode:
+     - five taps on the club name, for when the iPad is already open
+     - #reception on the end of the address, so it can be bookmarked
+   Either way a plain reload goes back to the customer view. */
 (function staffGate(){
   let n=0, t=0;
   $('#clubTap').addEventListener('click',()=>{
@@ -1271,8 +1284,10 @@ $('#btnSave').onclick=()=>saveRequest();
   newJobId();
 
   renderCards(); renderCrossOptions(); renderManager(); renderStringers();
-  setStaff(false); drawCrossSection(); draw(); render();
-  if(location.hash==='#stock') $('#mgrOpen').click();
+  const hash=(location.hash||'').toLowerCase();
+  setStaff(hash==='#reception' || hash==='#staff' || hash==='#stock');
+  drawCrossSection(); draw(); render();
+  if(location.hash.toLowerCase()==='#stock') $('#mgrOpen').click();
 })();
 </script>
 </body>
