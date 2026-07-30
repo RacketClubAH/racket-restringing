@@ -123,6 +123,9 @@ textarea.ctl:focus{border-color:var(--mple)}
 .sm-del:hover{color:var(--mple)}
 .charges{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px 0;border-top:1px solid var(--pearl);border-bottom:1px solid var(--pearl);margin-bottom:18px}
 .mgr-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.endpoint{border-top:1px solid var(--pearl);margin-top:18px;padding-top:18px}
+.endpoint .status{margin-top:10px;font-size:11px;letter-spacing:.03em;color:var(--bronze)}
+.endpoint .status.live::before{content:'';display:inline-block;width:6px;height:6px;background:var(--mple);border-radius:50%;margin-right:7px;vertical-align:middle}
 .addform{border-top:1px solid var(--pearl);margin-top:18px;padding-top:18px}
 .addform .row{display:grid;gap:12px;margin-bottom:12px}
 .r2{grid-template-columns:1fr 1fr}
@@ -234,7 +237,7 @@ textarea.ctl:focus{border-color:var(--mple)}
     <header class="masthead">
       <div class="eyebrow t-highlight">Re-stringing service</div>
       <h1 class="t-title">Book your racket in.</h1>
-      <p class="t-body">Tell us what you play with and how you want it strung.</p>
+      <p class="t-body">Tell us what you play with and how you want it strung. We string in-house at the Racket Club — most rackets are ready the same day.</p>
     </header>
 
     <section class="block">
@@ -262,7 +265,7 @@ textarea.ctl:focus{border-color:var(--mple)}
     <section class="block">
       <span class="tag t-highlight">String</span>
       <h2 class="t-title">The string.</h2>
-      <p class="lede t-body">Bring your own set, or choose from what we have on the rack today. Every string trades something off, tell us what matters most and we'll put the closest ones first.</p>
+      <p class="lede t-body">Bring your own set, or choose from what we have on the rack today. Every string trades something off — tell us what matters most and we'll put the closest ones first.</p>
 
       <div class="chips" id="sourceChips" role="group" aria-label="String source" style="margin-bottom:22px"></div>
 
@@ -306,7 +309,7 @@ textarea.ctl:focus{border-color:var(--mple)}
             <h3 class="t-title">Stock and prices.</h3>
             <button class="link" type="button" id="mgrClose">Done</button>
           </div>
-          <p class="lede t-body">Untick a string to hide it from customers while you're out of it, it stays on this list so you can put it back. Prices are the full re-string price, string and labour together.</p>
+          <p class="lede t-body">Untick a string to hide it from customers while you're out of it — it stays on this list so you can put it back. Prices are the full re-string price, string and labour together.</p>
 
           <ul class="sm-list" id="smList"></ul>
 
@@ -317,6 +320,21 @@ textarea.ctl:focus{border-color:var(--mple)}
               <input class="ctl t-info" id="cHybrid" type="number" min="0" step="1"></label>
             <label class="field"><span>Stringers</span>
               <input class="ctl t-info" id="cStringers" placeholder="Kyle, Andreas"></label>
+          </div>
+
+          <div class="endpoint">
+            <label class="field"><span>Workbook link</span>
+              <input class="ctl t-info" id="cWorkbook" placeholder="Paste the sheet's share link — puts an Open the sheet button on the job card"></label>
+          </div>
+
+          <div class="endpoint">
+            <label class="field"><span>Send to the log — endpoint <em style="opacity:.55;font-style:normal">(only if you have Power Automate)</em></span>
+              <input class="ctl t-info" id="cEndpoint" placeholder="https://prod-00.westeurope.logic.azure.com/…  or  mailto:restringing@…"></label>
+            <div class="status t-info" id="epStatus">Not set — the Send button stays hidden and you keep using Ctrl+V.</div>
+            <div class="mgr-actions">
+              <button class="btn ghost small t-highlight" type="button" id="smTest">Send a test row</button>
+            </div>
+            <p class="hint t-body">This stays on this computer and is never written into the file — that URL is the key to your sheet, so it must not end up in a public repository.</p>
           </div>
 
           <button class="btn ghost small t-highlight" type="button" id="smAddToggle">Add a string</button>
@@ -366,7 +384,7 @@ textarea.ctl:focus{border-color:var(--mple)}
             <button class="btn ghost small t-highlight" type="button" id="smCopy">Copy list for GitHub</button>
             <button class="btn ghost small t-highlight" type="button" id="smReset">Reset to the file</button>
           </div>
-          <p class="hint t-body">Changes are saved on this computer straight away. To make them the same for everyone, including guests on their phones, press <strong>Copy list for GitHub</strong> and paste the result over the marked block in <code>index.html</code>.</p>
+          <p class="hint t-body">Changes are saved on this computer straight away. To make them the same for everyone — including guests on their phones — press <strong>Copy list for GitHub</strong> and paste the result over the marked block in <code>index.html</code>.</p>
         </div>
       </div>
     </section>
@@ -398,9 +416,9 @@ textarea.ctl:focus{border-color:var(--mple)}
       <h2 class="t-title">When do you need it?</h2>
       <p class="lede t-body">Most rackets are back on the rack within a day. If you need it sooner, ask at the desk and we'll see what we can do.</p>
       <div class="grid g2">
-        <label class="field"><span>Ready by - date</span>
+        <label class="field"><span>Ready by — date</span>
           <input class="ctl t-info" id="fDate" type="date"></label>
-        <label class="field"><span>Ready by - time</span>
+        <label class="field"><span>Ready by — time</span>
           <select class="ctl t-info" id="fTime">
             <option>09:00</option><option>11:00</option><option selected>13:00</option>
             <option>15:00</option><option>17:00</option><option>19:00</option>
@@ -422,11 +440,13 @@ textarea.ctl:focus{border-color:var(--mple)}
         <strong id="ticketTotal">€0</strong>
       </div>
       <div class="actions">
+        <button class="btn t-highlight hidden" type="button" id="btnSend">Send to the log</button>
         <button class="btn t-highlight" type="button" id="btnCopy">Copy row for the log</button>
+        <button class="btn ghost t-highlight hidden" type="button" id="btnSheet">Open the sheet ↗</button>
         <button class="btn ghost t-highlight" type="button" id="btnCsv">Download CSV</button>
         <button class="btn ghost t-highlight" type="button" id="btnPrint">Print job card</button>
       </div>
-      <p class="hint t-body">“Copy row for the log” fills the tracking sheet from <strong>Name / Surname</strong> across to <strong>Status</strong>. Click the name cell on the first empty row and press Ctrl+V, the receipt number column is left alone for you to fill in by hand. The printed job card is sized for A5 and goes on the racket.</p>
+      <p class="hint t-body">“Copy row for the log” fills the tracking sheet from <strong>Name / Surname</strong> across to <strong>Status</strong>. Open the sheet, tap the name cell on the first empty row and paste — the receipt number column is left alone for you to fill in by hand. It splits into separate cells on the iPad as well as on the PC. The printed job card is sized for A5 and goes on the racket.</p>
     </div>
 
    </div>
@@ -465,7 +485,7 @@ const STRINGS = [
   { id:'bab-prolast', brand:'Babolat', name:'Pro Last', gauge:'1.25', type:'Co-polyester', texture:'poly-round', price:30, kg:[22,25], available:true,
     stats:{control:8,spin:6,power:4,comfort:4,durability:9,feel:5},
     for:"Built to survive. It lasts longer than most polyesters, which makes it a good fit for juniors and long, fast swings that would otherwise be back at the desk every fortnight.",
-    note:"Durability costs you feel, it plays firm and a little muted." },
+    note:"Durability costs you feel — it plays firm and a little muted." },
 
   { id:'bab-hurricane', brand:'Babolat', name:'Hurricane', gauge:'1.25', type:'Co-polyester', texture:'poly-shaped', price:30, kg:[22,25], available:true,
     stats:{control:8,spin:8,power:5,comfort:4,durability:7,feel:6},
@@ -484,22 +504,22 @@ const STRINGS = [
 
   { id:'head-lynxtour', brand:'Head', name:'Lynx Tour', gauge:'1.25', type:'Co-polyester', texture:'poly-shaped', price:35, kg:[21,24], available:true,
     stats:{control:8,spin:8,power:5,comfort:5,durability:7,feel:7},
-    for:"The most balanced polyester on the rack. Spin and control without the harshness, a good first polyester if you're stepping up from something softer.",
+    for:"The most balanced polyester on the rack. Spin and control without the harshness — a good first polyester if you're stepping up from something softer.",
     note:"Slightly less bite than a dedicated spin string." },
 
   { id:'wil-revolve', brand:'Wilson', name:'Revolve', gauge:'1.25', type:'Co-polyester', texture:'poly-shaped', price:35, kg:[21,24], available:true,
     stats:{control:7,spin:9,power:5,comfort:4,durability:7,feel:6},
     for:"Shaped for spin. A fast swing gets a lot of rotation out of it, so you can hit with more margin over the net and still bring the ball down.",
-    note:"You need racket-head speed to get the benefit, not the string for a short, slow swing." },
+    note:"You need racket-head speed to get the benefit — not the string for a short, slow swing." },
 
   { id:'lux-4gsoft', brand:'Luxilon', name:'4G Soft', gauge:'1.25', type:'Co-polyester', texture:'poly-round', price:55, kg:[22,25], available:true,
     stats:{control:8,spin:7,power:6,comfort:7,durability:8,feel:8},
-    for:"Softer than anything else on the rack, and it keeps its tension better than all of them, it plays much the same in week three as it did on day one.",
+    for:"Softer than anything else on the rack, and it keeps its tension better than all of them — it plays much the same in week three as it did on day one.",
     note:"Expensive, and it is still a polyester. A multifilament will always be gentler on the arm." },
 
   { id:'lux-alupower', brand:'Luxilon', name:'Alu Power', gauge:'1.25', type:'Co-polyester', texture:'poly-round', price:55, kg:[22,25], available:false,
     stats:{control:9,spin:7,power:4,comfort:3,durability:7,feel:7},
-    for:"The tour standard for twenty years. Precise, predictable and stable, the string most players end up on once they start hitting out with confidence.",
+    for:"The tour standard for twenty years. Precise, predictable and stable — the string most players end up on once they start hitting out with confidence.",
     note:"Stiff. Not the choice if your arm gives you trouble." }
 ];
 
@@ -545,7 +565,7 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
    STOCK — live copy, saved to this device
    ============================================================ */
 const KEY = 'ah-restring-stock-v1';
-let STOCK = [], CHARGES = {};
+let STOCK = [], CHARGES = {}, ENDPOINT = '', WORKBOOK = '';
 function loadSaved(){
   try{ const raw = localStorage.getItem(KEY);
        if(raw){ const o = JSON.parse(raw); if(Array.isArray(o.strings) && o.charges) return o; } }
@@ -553,7 +573,7 @@ function loadSaved(){
   return null;
 }
 function persist(){
-  try{ localStorage.setItem(KEY, JSON.stringify({strings:STOCK, charges:CHARGES})); }catch(e){}
+  try{ localStorage.setItem(KEY, JSON.stringify({strings:STOCK, charges:CHARGES, endpoint:ENDPOINT, workbook:WORKBOOK})); }catch(e){}
 }
 function resetStock(){
   STOCK = STRINGS.map(s=>JSON.parse(JSON.stringify(s)));
@@ -867,6 +887,9 @@ function renderManager(){
   });
   $('#cOwn').value=CHARGES.own; $('#cHybrid').value=CHARGES.hybrid;
   $('#cStringers').value=(CHARGES.stringers||[]).join(', ');
+  $('#cEndpoint').value=ENDPOINT;
+  $('#cWorkbook').value=WORKBOOK;
+  renderEndpointStatus();
 }
 function afterStockChange(){
   persist(); renderManager(); renderCards(); renderCrossOptions(); renderStringers();
@@ -892,15 +915,85 @@ function serialise(){
   const names = (CHARGES.stringers||[]).map(n=>q(n)).join(', ');
   return `const CONFIG = {
   cur: '€',
-  ownPrice: ${CHARGES.own},               // customer brings their own set - labour only
+  ownPrice: ${CHARGES.own},               // customer brings their own set — labour only
   hybridFee: ${CHARGES.hybrid},               // extra labour for a two-string hybrid
-  stringers: [${names}],        // who does the stringing - shown in the Stringer list
+  stringers: [${names}],        // who does the stringing — shown in the Stringer list
   opening: '${CONFIG.opening}'
 };
 
 const STRINGS = [
 ${lines}
 ];`;
+}
+
+/* ============================================================
+   SENDING TO THE LOG
+   The endpoint lives only on this device — a Power Automate URL
+   carries its own signature, so committing it would hand anyone
+   with the repo write access to the sheet.
+   ============================================================ */
+function renderEndpointStatus(){
+  const s=$('#epStatus');
+  s.classList.toggle('live', !!ENDPOINT);
+  s.textContent = !ENDPOINT
+    ? 'Not set — the Send button stays hidden and you keep using Ctrl+V.'
+    : (ENDPOINT.startsWith('mailto:')
+        ? 'Set — Send opens a pre-filled email; the flow picks it up and adds the row.'
+        : 'Set — Send posts the row straight into the sheet.');
+  $('#btnSend').classList.toggle('hidden', !ENDPOINT);
+  $('#btnCopy').classList.toggle('ghost', !!ENDPOINT);
+  $('#btnSheet').classList.toggle('hidden', !WORKBOOK);
+}
+/* Field names match the sheet's columns. notes / crossString / jobId are
+   sent too, so they are already there if you add columns for them. */
+function payload(){
+  const r=row(), m=mainString(), c=crossString();
+  return {
+    name:r[0], telephone:r[1], date:r[2], racquet:r[3], string:r[4],
+    tension:r[5], stringer:r[6], readyBy:r[7], amount:r[8], status:false,
+    notes:$('#fNotes').value.trim(),
+    crossString:(S.source==='stock' && S.hybrid && c && m && c.id!==m.id) ? `${c.brand} ${c.name}` : '',
+    jobId:$('#jobId').textContent
+  };
+}
+async function sendToLog(test){
+  if(!ENDPOINT){ toast('No endpoint set'); return; }
+  const data = test
+    ? {name:'TEST — please delete', telephone:'', date:fmtLogged(new Date()), racquet:'Wilson',
+       string:'Own String', tension:24, stringer:(CHARGES.stringers||[''])[0]||'',
+       readyBy:'', amount:0, status:false, notes:'test row from the re-stringing page', crossString:'', jobId:'TEST'}
+    : payload();
+
+  if(ENDPOINT.startsWith('mailto:')){
+    const addr=ENDPOINT.slice(7);
+    const subject=`RESTRING ${data.jobId}`;
+    location.href = `mailto:${addr}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(JSON.stringify(data,null,1))}`;
+    toast('Email opened — press send');
+    return;
+  }
+  $('#btnSend').disabled=true;
+  try{
+    // text/plain keeps it a simple request, so there is no CORS preflight
+    const res=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(data)});
+    if(!res.ok) throw new Error(res.status);
+    toast(test?'Test row sent':'Added to the log');
+    if(!test) nextCustomer();
+  }catch(err){
+    try{ await navigator.clipboard.writeText(row().join('\t')); }catch(e){}
+    toast('Send failed — row copied instead');
+  }finally{ $('#btnSend').disabled=false; }
+}
+function newJobId(){
+  newJobId();
+}
+function nextCustomer(){
+  ['fName','fPhone','fModel','fNotes','fOwnName'].forEach(id=>$('#'+id).value='');
+  S.stringId=null; S.hybrid=false; S.touched=false;
+  $('#hybridBox').classList.add('hidden');
+  syncChips($('#hybridChips'),()=>S.hybrid,hybridItems);
+  newJobId(); renderCards(); renderCrossOptions(); drawCrossSection(); draw(); render();
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.querySelector('.panel').scrollTo({top:0,behavior:'smooth'});
 }
 
 /* ============================================================
@@ -947,10 +1040,10 @@ function tensionAdvice(){
   if(kg>hi+0.6){
     box.classList.add('warn');
     box.textContent=`That's above the ${lo}–${hi} kg range for ${m.name}.`+
-      (m.texture.startsWith('poly') ? ' A stiff polyester strung tight is hard on the arm, we\u2019d suggest coming down a kilo or two.' : ' Expect a firm, low-powered bed.');
+      (m.texture.startsWith('poly') ? ' A stiff polyester strung tight is hard on the arm — we\u2019d suggest coming down a kilo or two.' : ' Expect a firm, low-powered bed.');
     return;
   }
-  box.textContent=`${lo}–${hi} kg is the sweet spot for ${m.name}. You're set at ${S.mains}${S.unit} in the mains  a good place to start. Crosses sit a touch lower so the bed stays even.`;
+  box.textContent=`${lo}–${hi} kg is the sweet spot for ${m.name}. You're set at ${S.mains}${S.unit} in the mains — a good place to start. Crosses sit a touch lower so the bed stays even.`;
 }
 function ticketRows(){
   return [
@@ -1033,6 +1126,11 @@ $('#cStringers').onchange=e=>{
   CHARGES.stringers=e.target.value.split(',').map(s=>s.trim()).filter(Boolean);
   afterStockChange();
 };
+$('#cEndpoint').onchange=e=>{ ENDPOINT=e.target.value.trim(); persist(); renderEndpointStatus(); };
+$('#cWorkbook').onchange=e=>{ WORKBOOK=e.target.value.trim(); persist(); renderEndpointStatus(); };
+$('#btnSheet').onclick=()=>{ if(WORKBOOK) window.open(WORKBOOK,'_blank','noopener'); };
+$('#smTest').onclick=()=>sendToLog(true);
+$('#btnSend').onclick=()=>sendToLog(false);
 $('#nStats').innerHTML = STAT_KEYS.map(k=>
   `<label class="field"><span>${k}</span><input class="ctl t-info" type="number" min="1" max="10" value="5" data-stat="${k}"></label>`).join('');
 $('#smAddToggle').onclick=()=>$('#smForm').classList.toggle('hidden');
@@ -1059,7 +1157,7 @@ $('#smSave').onclick=()=>{
 };
 $('#smCopy').onclick=async()=>{
   const text=serialise();
-  try{ await navigator.clipboard.writeText(text); toast('Copied, paste into index.html'); }
+  try{ await navigator.clipboard.writeText(text); toast('Copied — paste into index.html'); }
   catch{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Copied'); }
 };
 $('#smReset').onclick=()=>{
@@ -1107,14 +1205,29 @@ function row(){
   ];
 }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),1900); }
+const esc = v => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 $('#btnCopy').onclick=async()=>{
-  const line=row().join('\t');
-  try{ await navigator.clipboard.writeText(line); toast('Copied, paste into the sheet'); }
-  catch{ const ta=document.createElement('textarea'); ta.value=line; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Copied'); }
+  const cells=row(), tsv=cells.join('\t');
+  const html='<table><tr>'+cells.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr></table>';
+  try{
+    if(window.ClipboardItem && navigator.clipboard.write){
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html' : new Blob([html],{type:'text/html'}),
+        'text/plain': new Blob([tsv], {type:'text/plain'})
+      })]);
+    } else {
+      await navigator.clipboard.writeText(tsv);
+    }
+    toast('Copied — paste into the sheet');
+  }catch(e){
+    const ta=document.createElement('textarea'); ta.value=tsv;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    toast('Copied');
+  }
 };
 $('#btnCsv').onclick=()=>{
-  const esc=v=>`"${String(v).replace(/"/g,'""')}"`;
-  const csv=[SHEET_HEADERS.map(esc).join(','),row().concat('').map(esc).join(',')].join('\r\n');
+  const q=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const csv=[SHEET_HEADERS.map(q).join(','),row().concat('').map(q).join(',')].join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
   a.download=`${$('#jobId').textContent}.csv`; a.click(); URL.revokeObjectURL(a.href);
@@ -1133,7 +1246,7 @@ $('#btnPrint').onclick=()=>{
 (function boot(){
   const saved=loadSaved();
   resetStock();
-  if(saved){ STOCK=saved.strings; CHARGES=saved.charges; }
+  if(saved){ STOCK=saved.strings; CHARGES=saved.charges; ENDPOINT=saved.endpoint||''; WORKBOOK=saved.workbook||''; }
 
   const d=new Date(); d.setDate(d.getDate()+1);
   $('#fDate').value=d.toISOString().slice(0,10);
@@ -1142,7 +1255,7 @@ $('#btnPrint').onclick=()=>{
   $('#jobId').textContent=`AH-RS-${String(s.getFullYear()).slice(2)}${String(s.getMonth()+1).padStart(2,'0')}${String(s.getDate()).padStart(2,'0')}-${seq}`;
 
   renderCards(); renderCrossOptions(); renderManager(); renderStringers();
-  drawCrossSection(); draw(); render();
+  renderEndpointStatus(); drawCrossSection(); draw(); render();
   if(location.hash==='#stock') $('#mgrOpen').click();
 })();
 </script>
