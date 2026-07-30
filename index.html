@@ -159,6 +159,10 @@ textarea.ctl:focus{border-color:var(--mple)}
 .btn.ghost:hover{background:var(--mple);color:var(--foam);opacity:1}
 .btn.small{padding:9px 16px;font-size:10px}
 .hint{margin-top:14px;font-size:11.5px;line-height:1.6;color:var(--mple);opacity:.6}
+.manual{margin-top:18px;border:1px solid var(--bronze);padding:16px}
+.manual p{margin:0 0 10px;font-size:12.5px;color:var(--mple)}
+.manual textarea{border:1px solid var(--pearl);padding:9px;background:#fff;resize:vertical}
+.manual .err{margin:9px 0 0;font-size:10.5px;color:var(--bronze)}
 
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--mple);color:var(--foam);padding:12px 22px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:60}
 .toast.on{opacity:1;transform:translate(-50%,0)}
@@ -181,20 +185,6 @@ textarea.ctl:focus{border-color:var(--mple)}
   .panel{scroll-behavior:auto}
 }
 
-.print-only{display:none}
-@media print{
-  @page{size:A5 landscape;margin:12mm}
-  body{background:#fff}
-  .app,.toast{display:none !important}
-  .print-only{display:block;color:#003087;font-family:Geologica,sans-serif}
-  .print-only .ph{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #8E7A6B;padding-bottom:9px}
-  .print-only .ph .n{font-family:"Ivy Presto Headline",Prata,serif;font-size:21px}
-  .print-only .ph .id{font-size:11px;letter-spacing:.1em;color:#8E7A6B}
-  .print-only dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;margin-top:14px;font-size:12px}
-  .print-only dt{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8E7A6B}
-  .print-only dd{margin:0}
-  .print-only .pf{margin-top:16px;border-top:1px solid #CFCDC9;padding-top:8px;font-size:9px;letter-spacing:.03em;color:#8E7A6B}
-}
 </style>
 </head>
 <body>
@@ -323,18 +313,13 @@ textarea.ctl:focus{border-color:var(--mple)}
           </div>
 
           <div class="endpoint">
-            <label class="field"><span>Workbook link</span>
-              <input class="ctl t-info" id="cWorkbook" placeholder="Paste the sheet's share link — puts an Open the sheet button on the job card"></label>
-          </div>
-
-          <div class="endpoint">
-            <label class="field"><span>Send to the log — endpoint <em style="opacity:.55;font-style:normal">(only if you have Power Automate)</em></span>
-              <input class="ctl t-info" id="cEndpoint" placeholder="https://prod-00.westeurope.logic.azure.com/…  or  mailto:restringing@…"></label>
-            <div class="status t-info" id="epStatus">Not set — the Send button stays hidden and you keep using Ctrl+V.</div>
+            <label class="field"><span>Google Sheet — web app URL</span>
+              <input class="ctl t-info" id="cEndpoint" placeholder="https://script.google.com/macros/s/…/exec"></label>
+            <div class="status t-info" id="epStatus">Not set — requests cannot be saved yet.</div>
             <div class="mgr-actions">
-              <button class="btn ghost small t-highlight" type="button" id="smTest">Send a test row</button>
+              <button class="btn ghost small t-highlight" type="button" id="smTest">Save a test row</button>
             </div>
-            <p class="hint t-body">This stays on this computer and is never written into the file — that URL is the key to your sheet, so it must not end up in a public repository.</p>
+            <p class="hint t-body">Set this once per device. It stays on this iPad and is never written into the file — anyone who found that URL in a public repository could add rows to your sheet.</p>
           </div>
 
           <button class="btn ghost small t-highlight" type="button" id="smAddToggle">Add a string</button>
@@ -409,6 +394,8 @@ textarea.ctl:focus{border-color:var(--mple)}
           </div></label>
       </div>
       <p class="advice t-body" id="tensionAdvice">Choose a string and we'll suggest a starting tension.</p>
+      <label class="field" style="margin-top:20px;max-width:340px"><span>Or write it as the customer said it</span>
+        <input class="ctl t-info" id="fTensionFree" placeholder="22/23, 55lbs, NP, same as last time"></label>
     </section>
 
     <section class="block">
@@ -424,6 +411,8 @@ textarea.ctl:focus{border-color:var(--mple)}
             <option>15:00</option><option>17:00</option><option>19:00</option>
           </select></label>
       </div>
+      <label class="field" style="margin-top:16px;max-width:340px"><span>Or write it as the customer said it</span>
+        <input class="ctl t-info" id="fReadyFree" placeholder="asap, whenever, by 24 July, Thursday"></label>
       <div class="grid g2" style="margin-top:16px">
         <label class="field"><span>Stringer</span>
           <select class="ctl t-info" id="fStringer"></select></label>
@@ -440,13 +429,14 @@ textarea.ctl:focus{border-color:var(--mple)}
         <strong id="ticketTotal">€0</strong>
       </div>
       <div class="actions">
-        <button class="btn t-highlight hidden" type="button" id="btnSend">Send to the log</button>
-        <button class="btn t-highlight" type="button" id="btnCopy">Copy row for the log</button>
-        <button class="btn ghost t-highlight hidden" type="button" id="btnSheet">Open the sheet ↗</button>
-        <button class="btn ghost t-highlight" type="button" id="btnCsv">Download CSV</button>
-        <button class="btn ghost t-highlight" type="button" id="btnPrint">Print job card</button>
+        <button class="btn t-highlight" type="button" id="btnSave">Save the request</button>
       </div>
-      <p class="hint t-body">“Copy row for the log” fills the tracking sheet from <strong>Name / Surname</strong> across to <strong>Status</strong>. Open the sheet, tap the name cell on the first empty row and paste — the receipt number column is left alone for you to fill in by hand. It splits into separate cells on the iPad as well as on the PC. The printed job card is sized for A5 and goes on the racket.</p>
+      <div class="manual hidden" id="manualBox">
+        <p class="t-body">It couldn't reach the sheet, so nothing has been saved. Try again in a moment — the form is still filled in. If it keeps failing, here are the details to write down:</p>
+        <textarea class="ctl t-info" id="manualRow" readonly rows="3"></textarea>
+        <p class="err t-info" id="manualErr"></p>
+      </div>
+      <p class="hint t-body" id="saveHint">Saved straight into the sheet. The job card can be printed from the Print link at the end of the row.</p>
     </div>
 
    </div>
@@ -454,7 +444,6 @@ textarea.ctl:focus{border-color:var(--mple)}
 </div>
 
 <div class="toast t-highlight" id="toast">Copied</div>
-<div class="print-only" id="printCard"></div>
 
 <script>
 /* ============================================================
@@ -565,7 +554,7 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
    STOCK — live copy, saved to this device
    ============================================================ */
 const KEY = 'ah-restring-stock-v1';
-let STOCK = [], CHARGES = {}, ENDPOINT = '', WORKBOOK = '';
+let STOCK = [], CHARGES = {}, ENDPOINT = '';
 function loadSaved(){
   try{ const raw = localStorage.getItem(KEY);
        if(raw){ const o = JSON.parse(raw); if(Array.isArray(o.strings) && o.charges) return o; } }
@@ -573,7 +562,7 @@ function loadSaved(){
   return null;
 }
 function persist(){
-  try{ localStorage.setItem(KEY, JSON.stringify({strings:STOCK, charges:CHARGES, endpoint:ENDPOINT, workbook:WORKBOOK})); }catch(e){}
+  try{ localStorage.setItem(KEY, JSON.stringify({strings:STOCK, charges:CHARGES, endpoint:ENDPOINT})); }catch(e){}
 }
 function resetStock(){
   STOCK = STRINGS.map(s=>JSON.parse(JSON.stringify(s)));
@@ -888,7 +877,6 @@ function renderManager(){
   $('#cOwn').value=CHARGES.own; $('#cHybrid').value=CHARGES.hybrid;
   $('#cStringers').value=(CHARGES.stringers||[]).join(', ');
   $('#cEndpoint').value=ENDPOINT;
-  $('#cWorkbook').value=WORKBOOK;
   renderEndpointStatus();
 }
 function afterStockChange(){
@@ -935,14 +923,12 @@ ${lines}
 function renderEndpointStatus(){
   const s=$('#epStatus');
   s.classList.toggle('live', !!ENDPOINT);
-  s.textContent = !ENDPOINT
-    ? 'Not set — the Send button stays hidden and you keep using Ctrl+V.'
-    : (ENDPOINT.startsWith('mailto:')
-        ? 'Set — Send opens a pre-filled email; the flow picks it up and adds the row.'
-        : 'Set — Send posts the row straight into the sheet.');
-  $('#btnSend').classList.toggle('hidden', !ENDPOINT);
-  $('#btnCopy').classList.toggle('ghost', !!ENDPOINT);
-  $('#btnSheet').classList.toggle('hidden', !WORKBOOK);
+  s.textContent = ENDPOINT ? 'Connected — requests go straight into the sheet.'
+                           : 'Not set — requests cannot be saved yet.';
+  $('#btnSave').disabled = !ENDPOINT;
+  $('#saveHint').textContent = ENDPOINT
+    ? 'Saved straight into the sheet. The job card can be printed from the Print link at the end of the row.'
+    : 'Set the Google Sheet web app URL under Manage stock and prices before you can save.';
 }
 /* Field names match the sheet's columns. notes / crossString / jobId are
    sent too, so they are already there if you add columns for them. */
@@ -956,38 +942,42 @@ function payload(){
     jobId:$('#jobId').textContent
   };
 }
-async function sendToLog(test){
-  if(!ENDPOINT){ toast('No endpoint set'); return; }
+async function saveRequest(test){
+  if(!ENDPOINT){ toast('No sheet connected'); return; }
   const data = test
     ? {name:'TEST — please delete', telephone:'', date:fmtLogged(new Date()), racquet:'Wilson',
-       string:'Own String', tension:24, stringer:(CHARGES.stringers||[''])[0]||'',
-       readyBy:'', amount:0, status:false, notes:'test row from the re-stringing page', crossString:'', jobId:'TEST'}
+       string:'Own String', tension:'24', stringer:(CHARGES.stringers||[''])[0]||'',
+       readyBy:'', amount:0, status:false, notes:'test row from the re-stringing page',
+       crossString:'', jobId:'TEST-'+Date.now()}
     : payload();
 
-  if(ENDPOINT.startsWith('mailto:')){
-    const addr=ENDPOINT.slice(7);
-    const subject=`RESTRING ${data.jobId}`;
-    location.href = `mailto:${addr}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(JSON.stringify(data,null,1))}`;
-    toast('Email opened — press send');
-    return;
-  }
-  $('#btnSend').disabled=true;
+  const btn=$('#btnSave');
+  btn.disabled=true; btn.textContent = test ? 'Sending…' : 'Saving…';
+  $('#manualBox').classList.add('hidden');
   try{
-    // text/plain keeps it a simple request, so there is no CORS preflight
-    const res=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(data)});
-    if(!res.ok) throw new Error(res.status);
-    toast(test?'Test row sent':'Added to the log');
+    // text/plain keeps it a simple request, so there is no CORS preflight —
+    // Apps Script does not answer preflight properly and the save would fail
+    const res=await fetch(ENDPOINT,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(data)});
+    if(!res.ok) throw new Error('the sheet replied '+res.status);
+    let out={}; try{ out=JSON.parse(await res.text()); }catch(e){}
+    if(out.ok===false) throw new Error(out.error||'the sheet refused it');
+    toast(test?'Test row added':'Saved to the sheet');
     if(!test) nextCustomer();
   }catch(err){
-    try{ await navigator.clipboard.writeText(row().join('\t')); }catch(e){}
-    toast('Send failed — row copied instead');
-  }finally{ $('#btnSend').disabled=false; }
+    const lines=ticketRows().map(([k,v])=>k+': '+v).join('\n');
+    showManual(lines, err && err.message);
+    toast('Not saved — see below');
+  }finally{
+    btn.disabled=false; btn.textContent='Save the request';
+    renderEndpointStatus();
+  }
 }
 function newJobId(){
   newJobId();
 }
 function nextCustomer(){
-  ['fName','fPhone','fModel','fNotes','fOwnName'].forEach(id=>$('#'+id).value='');
+  ['fName','fPhone','fModel','fNotes','fOwnName','fTensionFree','fReadyFree'].forEach(id=>$('#'+id).value='');
   S.stringId=null; S.hybrid=false; S.touched=false;
   $('#hybridBox').classList.add('hidden');
   syncChips($('#hybridChips'),()=>S.hybrid,hybridItems);
@@ -1051,9 +1041,9 @@ function ticketRows(){
     ['Racket',   [S.brand, $('#fModel').value.trim()].filter(Boolean).join(' · ')],
     ['String',   stringLabel()],
     ['Source',   S.source==='own' ? 'Customer supplied' : 'Club stock'],
-    ['Tension',  `${S.mains} / ${S.cross} ${S.unit}`],
+    ['Tension',  $('#fTensionFree').value.trim() || `${S.mains} / ${S.cross} ${S.unit}`],
     ['Stringer', $('#fStringer').value || '—'],
-    ['Ready by', `${fmtReady($('#fDate').value) || '—'} · ${$('#fTime').value}`],
+    ['Ready by', `${readyByOut() || '—'}${$('#fReadyFree').value.trim()?'':' · '+$('#fTime').value}`],
     ['Notes',    $('#fNotes').value.trim() || '—']
   ];
 }
@@ -1108,7 +1098,7 @@ document.querySelectorAll('.stepper button').forEach(b=>{
     ping(); render();
   };
 });
-['fName','fPhone','fModel','fDate','fTime','fNotes','fOwnName','fStringer'].forEach(id=>$('#'+id).addEventListener('input',render));
+['fName','fPhone','fModel','fDate','fTime','fNotes','fOwnName','fStringer','fTensionFree','fReadyFree'].forEach(id=>$('#'+id).addEventListener('input',render));
 $('#fStringer').addEventListener('change',render);
 $('#fOwnType').addEventListener('change',e=>{ S.ownType=e.target.value; drawCrossSection(); draw(); ping(); });
 $('#fCross').addEventListener('change',e=>{ S.crossId=e.target.value; draw(); render(); });
@@ -1127,10 +1117,8 @@ $('#cStringers').onchange=e=>{
   afterStockChange();
 };
 $('#cEndpoint').onchange=e=>{ ENDPOINT=e.target.value.trim(); persist(); renderEndpointStatus(); };
-$('#cWorkbook').onchange=e=>{ WORKBOOK=e.target.value.trim(); persist(); renderEndpointStatus(); };
-$('#btnSheet').onclick=()=>{ if(WORKBOOK) window.open(WORKBOOK,'_blank','noopener'); };
-$('#smTest').onclick=()=>sendToLog(true);
-$('#btnSend').onclick=()=>sendToLog(false);
+
+$('#smTest').onclick=()=>saveRequest(true);
 $('#nStats').innerHTML = STAT_KEYS.map(k=>
   `<label class="field"><span>${k}</span><input class="ctl t-info" type="number" min="1" max="10" value="5" data-stat="${k}"></label>`).join('');
 $('#smAddToggle').onclick=()=>$('#smForm').classList.toggle('hidden');
@@ -1180,6 +1168,17 @@ function fmtReady(iso){
   const [y,m,d]=iso.split('-');
   return `${d}/${m}/${y}`;
 }
+/* The live log holds "asap", "whenever", "22/23", "55lbs", "NP". If reception
+   types something in the free-text box it goes through untouched; otherwise the
+   picker's value is used. */
+function readyByOut(){
+  const free=$('#fReadyFree').value.trim();
+  return free || fmtReady($('#fDate').value);
+}
+function tensionOut(){
+  const free=$('#fTensionFree').value.trim();
+  return free || S.mains;
+}
 function sheetString(){
   if(S.source==='own') return 'Own String';
   const m=mainString(); if(!m) return '';
@@ -1197,56 +1196,27 @@ function row(){
     fmtLogged(new Date()),                                // DATE
     sheetRacquet(),                                       // RACQUET
     sheetString(),                                        // STRING
-    S.mains,                                              // TENSION
+    tensionOut(),                                         // TENSION
     $('#fStringer').value,                                // NAME OF STRINGER
-    fmtReady($('#fDate').value),                          // READY BY
+    readyByOut(),                                         // READY BY
     p===null ? '' : p,                                    // AMOUNT TO PAY
     'FALSE'                                               // STATUS
   ];
 }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),1900); }
-const esc = v => String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-$('#btnCopy').onclick=async()=>{
-  const cells=row(), tsv=cells.join('\t');
-  const html='<table><tr>'+cells.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr></table>';
-  try{
-    if(window.ClipboardItem && navigator.clipboard.write){
-      await navigator.clipboard.write([new ClipboardItem({
-        'text/html' : new Blob([html],{type:'text/html'}),
-        'text/plain': new Blob([tsv], {type:'text/plain'})
-      })]);
-    } else {
-      await navigator.clipboard.writeText(tsv);
-    }
-    toast('Copied — paste into the sheet');
-  }catch(e){
-    const ta=document.createElement('textarea'); ta.value=tsv;
-    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-    toast('Copied');
-  }
-};
-$('#btnCsv').onclick=()=>{
-  const q=v=>`"${String(v).replace(/"/g,'""')}"`;
-  const csv=[SHEET_HEADERS.map(q).join(','),row().concat('').map(q).join(',')].join('\r\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`${$('#jobId').textContent}.csv`; a.click(); URL.revokeObjectURL(a.href);
-  toast('CSV downloaded');
-};
-$('#btnPrint').onclick=()=>{
-  $('#printCard').innerHTML=`
-    <div class="ph"><div class="n">Racket re-stringing</div><div class="id">${$('#jobId').textContent}</div></div>
-    <dl>${ticketRows().map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}
-    <dt>Price</dt><dd>${priceOf()===null?'—':CONFIG.cur+priceOf()}</dd></dl>
-    <div class="pf">Aphrodite Hills Racket Club · ${CONFIG.opening} · 3, Aphrodite Avenue, Kouklia 8509 · +357 26 828000</div>`;
-  window.print();
-};
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2200); }
+function showManual(tsv,msg){
+  $('#manualBox').classList.remove('hidden');
+  $('#manualRow').value=tsv;
+  $('#manualErr').textContent=msg?('The browser said: '+msg):'';
+}
+$('#btnSave').onclick=()=>saveRequest();
 
 /* boot */
 (function boot(){
   const saved=loadSaved();
   resetStock();
-  if(saved){ STOCK=saved.strings; CHARGES=saved.charges; ENDPOINT=saved.endpoint||''; WORKBOOK=saved.workbook||''; }
+  if(saved){ STOCK=saved.strings; CHARGES=saved.charges; ENDPOINT=saved.endpoint||''; }
 
   const d=new Date(); d.setDate(d.getDate()+1);
   $('#fDate').value=d.toISOString().slice(0,10);
