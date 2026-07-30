@@ -31,7 +31,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* ---------- STAGE ---------- */
 .stage{position:relative;background:var(--mple);color:var(--foam);display:flex;flex-direction:column;align-items:center;padding:calc(var(--gap)*1.2) var(--gap);overflow:hidden}
 .stage-head{width:100%;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-.stage-head .club{font-size:11px;color:var(--shell);opacity:.85}
+.stage-head .club{font-size:11px;color:var(--shell);opacity:.85;cursor:default;-webkit-user-select:none;user-select:none}
+.stage-head .club span{color:var(--foam);opacity:.9}
 .stage-head .job{font-size:11px;color:var(--shell);opacity:.7}
 .racket-wrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0;padding:14px 0}
 #racket{height:100%;max-height:100%;width:auto;overflow:visible}
@@ -193,8 +194,8 @@ textarea.ctl:focus{border-color:var(--mple)}
 
   <section class="stage">
     <div class="stage-head t-highlight">
-      <div class="club">Aphrodite Hills · Racket Club</div>
-      <div class="job" id="jobId">—</div>
+      <div class="club" id="clubTap" role="presentation">Aphrodite Hills · Racket Club<span id="staffFlag"></span></div>
+      <div class="job" id="jobId" data-staff>—</div>
     </div>
 
     <div class="racket-wrap">
@@ -289,7 +290,7 @@ textarea.ctl:focus{border-color:var(--mple)}
           </div>
         </div>
 
-        <div style="margin-top:26px">
+        <div class="hidden" data-staff style="margin-top:26px">
           <button class="link" type="button" id="mgrOpen">Manage stock and prices</button>
         </div>
 
@@ -394,7 +395,7 @@ textarea.ctl:focus{border-color:var(--mple)}
           </div></label>
       </div>
       <p class="advice t-body" id="tensionAdvice">Choose a string and we'll suggest a starting tension.</p>
-      <label class="field" style="margin-top:20px;max-width:340px"><span>Or write it as the customer said it</span>
+      <label class="field hidden" data-staff style="margin-top:20px;max-width:340px"><span>Reception — write it as the customer said it</span>
         <input class="ctl t-info" id="fTensionFree" placeholder="22/23, 55lbs, NP, same as last time"></label>
     </section>
 
@@ -411,9 +412,9 @@ textarea.ctl:focus{border-color:var(--mple)}
             <option>15:00</option><option>17:00</option><option>19:00</option>
           </select></label>
       </div>
-      <label class="field" style="margin-top:16px;max-width:340px"><span>Or write it as the customer said it</span>
+      <label class="field hidden" data-staff style="margin-top:16px;max-width:340px"><span>Reception — write it as the customer said it</span>
         <input class="ctl t-info" id="fReadyFree" placeholder="asap, whenever, by 24 July, Thursday"></label>
-      <div class="grid g2" style="margin-top:16px">
+      <div class="grid g2 hidden" data-staff style="margin-top:16px">
         <label class="field"><span>Stringer</span>
           <select class="ctl t-info" id="fStringer"></select></label>
       </div>
@@ -422,7 +423,7 @@ textarea.ctl:focus{border-color:var(--mple)}
     </section>
 
     <div class="ticket">
-      <h2 class="t-title">Your job card.</h2>
+      <h2 class="t-title">Your request.</h2>
       <dl id="ticketList"></dl>
       <div class="total">
         <span class="t-highlight">Total</span>
@@ -432,11 +433,11 @@ textarea.ctl:focus{border-color:var(--mple)}
         <button class="btn t-highlight" type="button" id="btnSave">Save the request</button>
       </div>
       <div class="manual hidden" id="manualBox">
-        <p class="t-body">It couldn't reach the sheet, so nothing has been saved. Try again in a moment — the form is still filled in. If it keeps failing, here are the details to write down:</p>
-        <textarea class="ctl t-info" id="manualRow" readonly rows="3"></textarea>
-        <p class="err t-info" id="manualErr"></p>
+        <p class="t-body" id="manualLead">Nothing has been saved. Please try again in a moment — everything you entered is still here.</p>
+        <textarea class="ctl t-info hidden" data-staff id="manualRow" readonly rows="3"></textarea>
+        <p class="err t-info hidden" data-staff id="manualErr"></p>
       </div>
-      <p class="hint t-body" id="saveHint">Saved straight into the sheet. The job card can be printed from the Print link at the end of the row.</p>
+      <p class="hint t-body hidden" data-staff id="saveHint"></p>
     </div>
 
    </div>
@@ -548,6 +549,18 @@ const S = {
 };
 
 const $ = s => document.querySelector(s);
+
+/* The iPad gets handed to the customer, so anything only reception needs is
+   hidden until you tap the club name five times. It resets on every reload,
+   so a guest cannot wander into it. */
+let STAFF = false;
+function setStaff(on){
+  STAFF = on;
+  document.querySelectorAll('[data-staff]').forEach(el=>el.classList.toggle('hidden', !on));
+  $('#staffFlag').textContent = on ? '  ·  reception' : '';
+  if(!on) $('#stockMgr').classList.add('hidden');
+  renderEndpointStatus();
+}
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ============================================================
@@ -557,7 +570,7 @@ const KEY = 'ah-restring-stock-v1';
 let STOCK = [], CHARGES = {}, ENDPOINT = '';
 function loadSaved(){
   try{ const raw = localStorage.getItem(KEY);
-       if(raw){ const o = JSON.parse(raw); if(Array.isArray(o.strings) && o.charges) return o; } }
+       if(raw){ const o = JSON.parse(raw); if(o && typeof o === 'object') return o; } }
   catch(e){}
   return null;
 }
@@ -927,8 +940,8 @@ function renderEndpointStatus(){
                            : 'Not set — requests cannot be saved yet.';
   $('#btnSave').disabled = !ENDPOINT;
   $('#saveHint').textContent = ENDPOINT
-    ? 'Saved straight into the sheet. The job card can be printed from the Print link at the end of the row.'
-    : 'Set the Google Sheet web app URL under Manage stock and prices before you can save.';
+    ? 'Goes straight into the sheet. Print the job card from the link at the end of the row.'
+    : 'Tap the club name five times, open Manage stock and prices, and paste the Google Sheet web app URL.';
 }
 /* Field names match the sheet's columns. notes / crossString / jobId are
    sent too, so they are already there if you add columns for them. */
@@ -954,27 +967,47 @@ async function saveRequest(test){
   const btn=$('#btnSave');
   btn.disabled=true; btn.textContent = test ? 'Sending…' : 'Saving…';
   $('#manualBox').classList.add('hidden');
+  const body=JSON.stringify(data);
+  // text/plain keeps it a simple request; Apps Script does not answer a CORS
+  // preflight, so anything else fails before it leaves the browser
+  const opts={method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:body};
   try{
-    // text/plain keeps it a simple request, so there is no CORS preflight —
-    // Apps Script does not answer preflight properly and the save would fail
-    const res=await fetch(ENDPOINT,{method:'POST',redirect:'follow',
-      headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(data)});
+    const res=await fetch(ENDPOINT,Object.assign({redirect:'follow'},opts));
     if(!res.ok) throw new Error('the sheet replied '+res.status);
     let out={}; try{ out=JSON.parse(await res.text()); }catch(e){}
     if(out.ok===false) throw new Error(out.error||'the sheet refused it');
-    toast(test?'Test row added':'Saved to the sheet');
-    if(!test) nextCustomer();
+    done(test);
   }catch(err){
-    const lines=ticketRows().map(([k,v])=>k+': '+v).join('\n');
-    showManual(lines, err && err.message);
-    toast('Not saved — see below');
+    // Commonly the row did arrive and only the reply was blocked. Send it once
+    // more with no-cors: the browser hides the response, so we cannot confirm.
+    try{
+      await fetch(ENDPOINT,Object.assign({mode:'no-cors'},opts));
+      done(test, true);
+    }catch(err2){
+      const lines=ticketRows().map(([k,v])=>k+': '+v).join('\n');
+      $('#manualLead').textContent='Nothing has been saved. Please try again in a moment — everything you entered is still here.';
+      showManual(lines, (err && err.message)+' / '+(err2 && err2.message));
+      toast('Not saved');
+    }
   }finally{
     btn.disabled=false; btn.textContent='Save the request';
     renderEndpointStatus();
   }
+
+  function done(isTest, unconfirmed){
+    if(unconfirmed){
+      $('#manualLead').textContent='Sent, but the sheet did not reply. Check the last row before saving it again — it has probably gone in.';
+      showManual(ticketRows().map(([k,v])=>k+': '+v).join('\n'), 'reply blocked by the browser');
+    }
+    toast(isTest ? 'Test row sent' : (unconfirmed ? 'Sent — please check' : 'Saved'));
+    if(!isTest && !unconfirmed) setTimeout(nextCustomer, 0);   // outside the try: a
+    // hiccup clearing the form must never be reported as a save that did not happen
+  }
 }
 function newJobId(){
-  newJobId();
+  const s=new Date(), seq=String(Math.floor(Math.random()*900)+100);
+  $('#jobId').textContent =
+    `AH-RS-${String(s.getFullYear()).slice(2)}${String(s.getMonth()+1).padStart(2,'0')}${String(s.getDate()).padStart(2,'0')}-${seq}`;
 }
 function nextCustomer(){
   ['fName','fPhone','fModel','fNotes','fOwnName','fTensionFree','fReadyFree'].forEach(id=>$('#'+id).value='');
@@ -1119,6 +1152,16 @@ $('#cStringers').onchange=e=>{
 $('#cEndpoint').onchange=e=>{ ENDPOINT=e.target.value.trim(); persist(); renderEndpointStatus(); };
 
 $('#smTest').onclick=()=>saveRequest(true);
+
+(function staffGate(){
+  let n=0, t=0;
+  $('#clubTap').addEventListener('click',()=>{
+    const now=Date.now();
+    n = (now-t < 2500) ? n+1 : 1;
+    t = now;
+    if(n>=5){ n=0; setStaff(!STAFF); toast(STAFF?'Reception mode on':'Reception mode off'); }
+  });
+})();
 $('#nStats').innerHTML = STAT_KEYS.map(k=>
   `<label class="field"><span>${k}</span><input class="ctl t-info" type="number" min="1" max="10" value="5" data-stat="${k}"></label>`).join('');
 $('#smAddToggle').onclick=()=>$('#smForm').classList.toggle('hidden');
@@ -1216,16 +1259,19 @@ $('#btnSave').onclick=()=>saveRequest();
 (function boot(){
   const saved=loadSaved();
   resetStock();
-  if(saved){ STOCK=saved.strings; CHARGES=saved.charges; ENDPOINT=saved.endpoint||''; }
+  if(saved){
+    if(Array.isArray(saved.strings) && saved.strings.length) STOCK = saved.strings;
+    if(saved.charges) CHARGES = Object.assign(CHARGES, saved.charges);
+    ENDPOINT = saved.endpoint || '';
+  }
 
   const d=new Date(); d.setDate(d.getDate()+1);
   $('#fDate').value=d.toISOString().slice(0,10);
   $('#fDate').min=new Date().toISOString().slice(0,10);
-  const s=new Date(), seq=String(Math.floor(Math.random()*900)+100);
-  $('#jobId').textContent=`AH-RS-${String(s.getFullYear()).slice(2)}${String(s.getMonth()+1).padStart(2,'0')}${String(s.getDate()).padStart(2,'0')}-${seq}`;
+  newJobId();
 
   renderCards(); renderCrossOptions(); renderManager(); renderStringers();
-  renderEndpointStatus(); drawCrossSection(); draw(); render();
+  setStaff(false); drawCrossSection(); draw(); render();
   if(location.hash==='#stock') $('#mgrOpen').click();
 })();
 </script>
