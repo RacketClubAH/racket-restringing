@@ -320,7 +320,9 @@ textarea.ctl:focus{border-color:var(--mple)}
             <div class="mgr-actions">
               <button class="btn ghost small t-highlight" type="button" id="smTest">Save a test row</button>
               <button class="btn ghost small t-highlight" type="button" id="smCheck">Check the connection ↗</button>
+              <button class="btn ghost small t-highlight" type="button" id="smLink">Set-up link for another device</button>
             </div>
+            <input class="ctl t-info hidden" id="setupLink" readonly>
             <p class="hint t-body">Set this once per device. It stays on this iPad and is never written into the file — anyone who found that URL in a public repository could add rows to your sheet.</p>
           </div>
 
@@ -939,7 +941,7 @@ function renderEndpointStatus(){
   s.classList.toggle('live', !!ENDPOINT);
   s.textContent = ENDPOINT ? 'Connected — requests go straight into the sheet.'
                            : 'Not set — requests cannot be saved yet.';
-  $('#btnSave').disabled = !ENDPOINT;
+  $('#btnSave').disabled = false;   // never dead — saveRequest explains instead
   $('#saveHint').textContent = ENDPOINT
     ? 'Goes straight into the sheet. Print the job card from the link at the end of the row.'
     : 'Tap the club name five times, open Manage stock and prices, and paste the Google Sheet web app URL.';
@@ -957,7 +959,16 @@ function payload(){
   };
 }
 async function saveRequest(test){
-  if(!ENDPOINT){ toast('No sheet connected'); return; }
+  if(!ENDPOINT){
+    $('#manualLead').textContent = STAFF
+      ? 'This device is not connected yet. Open Manage stock and prices and paste the Google Sheet web app URL — the setting is stored per device, so each iPad needs it once.'
+      : 'This tablet is not connected to the log yet. Please ask at the desk.';
+    $('#manualBox').classList.remove('hidden');
+    $('#manualRow').value = ticketRows().map(function(p){return p[0]+': '+p[1];}).join('\n');
+    $('#manualErr').textContent = 'no endpoint set on this device';
+    toast('Not connected');
+    return;
+  }
   const data = test
     ? {name:'TEST — please delete', telephone:'', date:fmtLogged(new Date()), racquet:'Wilson',
        string:'Own String', tension:'24', stringer:(CHARGES.stringers||[''])[0]||'',
@@ -972,8 +983,17 @@ async function saveRequest(test){
   // text/plain keeps it a simple request; Apps Script does not answer a CORS
   // preflight, so anything else fails before it leaves the browser
   const opts={method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:body};
+  // without this a stalled connection leaves the button saying "Saving…" for ever
+  const withTimeout=(extra)=>{
+    const ac = typeof AbortController!=='undefined' ? new AbortController() : null;
+    const o = Object.assign({}, opts, extra, ac?{signal:ac.signal}:{});
+    const p = fetch(ENDPOINT,o);
+    if(!ac) return p;
+    const t = setTimeout(()=>ac.abort(), 15000);
+    return p.finally(()=>clearTimeout(t));
+  };
   try{
-    const res=await fetch(ENDPOINT,Object.assign({redirect:'follow'},opts));
+    const res=await withTimeout({redirect:'follow'});
     if(!res.ok) throw new Error('the sheet replied '+res.status);
     let out={}; try{ out=JSON.parse(await res.text()); }catch(e){}
     if(out.ok===false) throw new Error(out.error||'the sheet refused it');
@@ -982,7 +1002,7 @@ async function saveRequest(test){
     // Commonly the row did arrive and only the reply was blocked. Send it once
     // more with no-cors: the browser hides the response, so we cannot confirm.
     try{
-      await fetch(ENDPOINT,Object.assign({mode:'no-cors'},opts));
+      await withTimeout({mode:'no-cors'});
       done(test, true);
     }catch(err2){
       const lines=ticketRows().map(([k,v])=>k+': '+v).join('\n');
@@ -1161,6 +1181,17 @@ $('#smCheck').onclick=()=>{
   if(!ENDPOINT){ toast('Paste the URL first'); return; }
   window.open(ENDPOINT.split('?')[0],'_blank','noopener');
 };
+/* Typing an Apps Script URL on an iPad is miserable. Set it up once, generate
+   this link, open it on the other device and it configures itself. */
+$('#smLink').onclick=()=>{
+  if(!ENDPOINT){ toast('Paste the URL first'); return; }
+  const link = location.origin + location.pathname + '#setup=' + encodeURIComponent(btoa(ENDPOINT));
+  const box = $('#setupLink');
+  box.classList.remove('hidden'); box.value = link;
+  box.focus(); box.setSelectionRange(0, link.length);
+  try{ document.execCommand('copy'); toast('Link copied — open it on the other device'); }
+  catch(e){ toast('Copy this link and open it on the other device'); }
+};
 
 /* Two ways into reception mode:
      - five taps on the club name, for when the iPad is already open
@@ -1276,6 +1307,15 @@ $('#btnSave').onclick=()=>saveRequest();
     if(Array.isArray(saved.strings) && saved.strings.length) STOCK = saved.strings;
     if(saved.charges) CHARGES = Object.assign(CHARGES, saved.charges);
     ENDPOINT = saved.endpoint || '';
+  }
+  const setup = /^#setup=(.+)$/i.exec(location.hash || '');
+  if(setup){
+    try{
+      ENDPOINT = atob(decodeURIComponent(setup[1]));
+      persist();
+      history.replaceState(null, '', location.pathname);
+      setTimeout(()=>toast('This device is now connected'), 400);
+    }catch(e){}
   }
 
   const d=new Date(); d.setDate(d.getDate()+1);
