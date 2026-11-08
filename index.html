@@ -429,13 +429,9 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
           <div class="step-card">
             <div class="step-no upper">Step 05 · Collection</div>
             <h2 class="question title-font">When do you need it?</h2>
-            <p class="help body-font">Choose the quickest option or select a date.</p>
-            <div class="choices ready-grid" id="readyChoices">
-              <button class="choice" data-ready="asap"><strong>As soon as possible</strong><small>We'll process it as soon as we can.</small></button>
-              <button class="choice" data-ready="date"><strong>Pick a date</strong><small>Choose the date you'd like it ready.</small></button>
-            </div>
-            <div id="dateBox" class="hidden">
-              <label class="field"><span>Date</span><input class="ctl" id="readyDate" type="date"></label>
+            <p class="help body-font">Please choose the date you'd like your racket to be ready. A date is required for every request.</p>
+            <div id="dateBox">
+              <label class="field"><span>Preferred collection date</span><input class="ctl" id="readyDate" type="date" required></label>
             </div>
             <div class="nav"><button class="btn secondary" data-back>Back</button><button class="btn primary" data-next>Continue</button></div>
           </div>
@@ -502,6 +498,7 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
         <label class="field"><span>Price (€)</span><input class="ctl" id="newPrice" type="number" min="0" step="1" placeholder="35"></label>
         <label class="field"><span>Low tension (kg)</span><input class="ctl" id="newLo" type="number" min="15" max="35" placeholder="22"></label>
         <label class="field"><span>High tension (kg)</span><input class="ctl" id="newHi" type="number" min="15" max="35" placeholder="25"></label>
+        <label class="field" style="grid-column:1/-1"><span>Customer-facing description</span><textarea class="ctl" id="newDescription" rows="3" placeholder="Describe how the string plays, its feel, spin, control or durability..."></textarea></label>
       </div>
       <div class="staff-actions">
         <button class="btn primary" id="addString">Add to stock</button>
@@ -625,7 +622,7 @@ const state={
   unit:'kg',
   mains:24,
   cross:23,
-  ready:'',
+  ready:'date',
   readyDate:'',
   notes:'',
   stock:[]
@@ -713,7 +710,7 @@ function renderBrands(){
 function renderCatalog(){
   const q=($('#catalogSearch')?.value||'').trim().toLowerCase();
   const host=$('#catalogStrings');
-  const list=state.stock.filter(s=>(`${s.brand} ${s.name} ${s.gauge} ${s.type}`).toLowerCase().includes(q));
+  const list=state.stock.filter(s=>(`${s.brand} ${s.name} ${s.gauge} ${s.type} ${s.for||''}`).toLowerCase().includes(q));
   host.innerHTML='';
   if(!list.length){
     host.innerHTML=`<div class="body-font" style="padding:16px;border:1px dashed var(--pearl);font-size:12px;color:rgba(0,48,135,.65)">No strings match your search.</div>`;
@@ -825,14 +822,11 @@ function renderTension(){
   }
 }
 function renderReady(){
-  $$('#readyChoices .choice').forEach(x=>x.classList.toggle('selected',x.dataset.ready===state.ready));
-  $('#dateBox').classList.toggle('hidden',state.ready!=='date');
+  $('#dateBox').classList.remove('hidden');
   $('#readyDate').value=state.readyDate;
 }
 function readyLabel(){
-  if(state.ready==='asap')return 'As soon as possible';
-  if(state.ready==='date')return state.readyDate||'Selected date';
-  return '—';
+  return state.readyDate||'—';
 }
 function stringLabel(){
   if(state.mode==='own')return state.ownName||"Customer's own string";
@@ -880,7 +874,7 @@ function canContinue(){
   if(state.step===1)return $('#name').value.trim()&&$('#phone').value.trim();
   if(state.step===2)return !!state.brand;
   if(state.step===3)return state.mode==='own'?!!$('#ownName').value.trim():(!state.hybrid||!!state.crossId);
-  if(state.step===5)return !!state.ready && (state.ready!=='date'||!!$('#readyDate').value);
+  if(state.step===5){const date=$('#readyDate').value;return !!date&&date>=$('#readyDate').min;}
   return true;
 }
 function next(){
@@ -933,15 +927,7 @@ const unitWrap=$('#unitChoices');
 function renderUnitChoices(){$$('#unitChoices .choice').forEach(b=>b.classList.toggle('selected',b.textContent.toLowerCase().includes(state.unit==='kg'?'kilograms':'pounds')))}
 renderUnitChoices();
 
-$$('[data-ready]').forEach(b=>b.onclick=()=>{
-  state.ready=b.dataset.ready;
-  if(state.ready==='date'&&!state.readyDate){
-    const d=new Date();
-    d.setDate(d.getDate()+1);
-    state.readyDate=d.toISOString().slice(0,10);
-  }
-  renderReady();
-});
+$('#readyDate').addEventListener('change',()=>{state.readyDate=$('#readyDate').value;});
 
 ['name','phone','model','notes','ownName'].forEach(id=>$('#'+id).addEventListener('input',()=>{
   if(id==='model')state.model=$('#model').value;
@@ -1014,7 +1000,7 @@ function renderStock(){
   state.stock.filter(s=>(`${s.brand} ${s.name}`).toLowerCase().includes(q)).forEach(s=>{
     const r=document.createElement('div');r.className='stock-row';
     r.innerHTML=`
-      <div><strong>${s.brand} ${s.name}</strong><small>${s.gauge||''} mm · ${money(s.price)} · ${s.available===false?'out of stock':'in stock'}</small></div>
+      <div><strong>${s.brand} ${s.name}</strong><small>${s.gauge||''} mm · ${money(s.price)} · ${s.available===false?'out of stock':'in stock'}</small>${s.for?`<small style="text-transform:none;letter-spacing:0;line-height:1.45">${s.for.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}</small>`:''}</div>
       <button class="toggle ${s.available!==false?'on':''}" aria-label="Toggle stock"></button>
       <button class="price-btn">€${s.price}</button>`;
     r.querySelector('.toggle').onclick=async()=>{
@@ -1048,6 +1034,7 @@ $('#addString').onclick=async()=>{
   let id=(brand+'-'+name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''),n=1;
   while(byId(id))id=id+'-'+(++n);
   const lo=+$('#newLo').value||22,hi=+$('#newHi').value||25;
+  const description=$('#newDescription').value.trim();
   const s={
     id,brand,name,gauge:$('#newGauge').value.trim()||'1.25',
     type:KIND_LABEL[kind],texture:kind,
@@ -1055,11 +1042,11 @@ $('#addString').onclick=async()=>{
     kg:[Math.min(lo,hi),Math.max(lo,hi)],
     available:true,
     stats:{control:5,spin:5,power:5,comfort:5,durability:5,feel:5},
-    for:'',note:''
+    for:description,note:''
   };
   state.stock.push(s);persistLocal();renderStock();renderCatalog();renderStringList($('#crossStrings'),$('#crossSearch').value,'cross');
   $('#addForm').classList.add('hidden');
-  ['newBrand','newName','newGauge','newPrice','newLo','newHi'].forEach(id=>$('#'+id).value='');
+  ['newBrand','newName','newGauge','newPrice','newLo','newHi','newDescription'].forEach(id=>$('#'+id).value='');
   try{await post({action:'addString',string:s});$('#stockStatus').textContent='String added and shared.'}
   catch(e){$('#stockStatus').textContent='String added on this device. Shared stock could not be updated.'}
 };
@@ -1264,8 +1251,9 @@ function bootSetup(){
   renderProgress();
   renderSetup();
   renderTension();
-  const today=new Date();today.setHours(0,0,0,0);
-  $('#readyDate').min=today.toISOString().slice(0,10);
+  const today=new Date();
+  const todayString=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  $('#readyDate').min=todayString;
   draw();renderPreview();renderEndpoint();
   refreshSharedStock();
 })();
