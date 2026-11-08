@@ -98,7 +98,7 @@ button{cursor:pointer}
 .masthead .eyebrow{font-size:10px;color:var(--bronze)}
 .masthead h1{margin:8px 0 8px;font-size:clamp(32px,4.4vw,52px);line-height:1.08;color:var(--mple)}
 .masthead p{margin:0;max-width:58ch;font-size:13px;color:rgba(0,48,135,.72)}
-.progress{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:18px 0 28px}
+.progress{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:18px 0 28px}
 .progress i{height:3px;background:var(--pearl);display:block}
 .progress i.on{background:var(--mple)}
 .step{display:none}
@@ -147,6 +147,23 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
 .string-tools{display:flex;gap:8px;align-items:end;margin-bottom:12px}
 .string-tools .field{flex:1;margin-top:0}
 .string-list{display:grid;gap:8px;max-height:48vh;overflow:auto}
+.catalog-tools{display:flex;gap:8px;align-items:end;margin:18px 0 14px}
+.catalog-tools .field{flex:1;margin-top:0}
+.catalog-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.catalog-item{width:100%;min-width:0;min-height:154px;border:1px solid var(--pearl);background:var(--white);padding:17px;text-align:left;display:flex;flex-direction:column;align-items:stretch;transition:border-color .18s,background .18s,transform .18s}
+.catalog-item:hover:not(:disabled){border-color:var(--bronze);transform:translateY(-1px)}
+.catalog-item:disabled{cursor:not-allowed;opacity:.62;background:#f0eeeb}
+.catalog-item .string-top{align-items:flex-start}
+.catalog-item .string-name{font-size:19px;line-height:1.2}
+.catalog-item .price{font-size:15px;font-weight:400}
+.catalog-item .desc{margin-top:9px;flex:1}
+.catalog-action{margin-top:13px;padding-top:10px;border-top:1px solid var(--pearl);font-size:9px;text-transform:uppercase;letter-spacing:.11em;color:var(--bronze)}
+.catalog-own{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:18px;padding:16px;border:1px solid var(--pearl);background:var(--foam)}
+.catalog-own p{margin:0;font-size:12px;color:rgba(0,48,135,.72)}
+.catalog-own .btn{flex-shrink:0}
+#catalogView .step-card{padding:clamp(22px,3vw,34px)}
+#catalogView .small-note{line-height:1.5}
+#ownStringBox{margin-top:18px}
 .string-item{
   border:1px solid var(--pearl);
   background:var(--foam);
@@ -259,7 +276,9 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
   .panel-inner{padding:22px 18px 40px}
 }
 @media(max-width:620px){
-  .choices,.tension-grid,.add-grid{grid-template-columns:1fr}
+  .choices,.tension-grid,.add-grid,.catalog-list{grid-template-columns:1fr}
+  .catalog-tools,.catalog-own{display:block}
+  .catalog-own .btn{margin-top:12px;width:100%}
   .string-tools{display:block}
   .string-tools .field{margin-top:0}
   .nav{position:sticky;bottom:8px;background:linear-gradient(transparent,var(--foam) 35%);padding-top:12px}
@@ -305,14 +324,31 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
   <section class="panel">
     <div class="panel-inner">
       <header class="masthead">
-        <div class="eyebrow upper">Re-stringing service</div>
-        <h1 class="title-font">Book your racket in.</h1>
-        <p class="body-font">A quick request at the Racket Club. Tell us what you want, then bring the racket to reception.</p>
+        <div class="eyebrow upper">Aphrodite Hills Racket Club · Re-stringing</div>
+        <h1 class="title-font" id="pageTitle">Choose your string.</h1>
+        <p class="body-font" id="pageIntro">Compare the strings available at the Racket Club and see the price before starting your restringing request.</p>
       </header>
 
-      <div class="progress" id="progress"></div>
+      <div class="progress hidden" id="progress"></div>
 
-      <section id="wizard">
+      <section id="catalogView">
+        <div class="step-card">
+          <div class="step-no upper">String catalogue</div>
+          <h2 class="question title-font">Find the right feel.</h2>
+          <p class="help body-font">Select a string to see the rest of the booking details. Prices are shown upfront, and unavailable strings are marked clearly.</p>
+          <div class="catalog-tools">
+            <label class="field"><span>Search strings</span><input class="ctl" id="catalogSearch" placeholder="Search by brand or string name"></label>
+          </div>
+          <div class="catalog-list" id="catalogStrings"></div>
+          <div class="catalog-own">
+            <p><strong>Already have your own string?</strong><br>We can restring your racket with customer-supplied string.</p>
+            <button class="btn secondary" id="ownStringStart">Use my own · €20</button>
+          </div>
+          <p class="small-note body-font">Prices are per racket. Strings marked “Currently unavailable” cannot be selected.</p>
+        </div>
+      </section>
+
+      <section id="wizard" class="hidden">
         <div class="step active" data-step="1">
           <div class="step-card">
             <div class="step-no upper">Step 01 · Player</div>
@@ -320,7 +356,7 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
             <p class="help body-font">Your name and mobile number let reception match the request to your racket.</p>
             <label class="field"><span>Name & surname</span><input class="ctl" id="name" autocomplete="name" placeholder="Your name"></label>
             <label class="field"><span>Mobile number</span><input class="ctl" id="phone" inputmode="tel" autocomplete="tel" placeholder="99 123456"></label>
-            <div class="nav"><button class="btn primary" data-next>Continue</button></div>
+            <div class="nav"><button class="btn secondary" id="backToCatalog">Back to strings</button><button class="btn primary" data-next>Continue</button></div>
           </div>
         </div>
 
@@ -337,58 +373,30 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
 
         <div class="step" data-step="3">
           <div class="step-card">
-            <div class="step-no upper">Step 03 · String</div>
-            <h2 class="question title-font">What string would you like?</h2>
-            <p class="help body-font">Know the string, need a recommendation, or bringing your own.</p>
-
-            <div class="choices" id="stringModes">
-              <button class="choice" data-mode="choose"><strong>I know my string</strong><small>Choose from strings currently on the rack.</small></button>
-              <button class="choice" data-mode="help"><strong>Help me choose</strong><small>Tell us what you want more or less of.</small></button>
-              <button class="choice" data-mode="own"><strong>I'm bringing my own</strong><small>We'll use the string you bring to reception.</small></button>
-            </div>
-
-            <div id="needBox" class="hidden" style="margin-top:16px">
-              <p class="help" style="margin-bottom:10px">What matters most?</p>
-              <div class="choices" id="needs"></div>
-            </div>
-
-            <div id="stringBox" class="hidden" style="margin-top:16px">
-              <div class="string-tools">
-                <label class="field"><span>Search</span><input class="ctl" id="stringSearch" placeholder="String or brand"></label>
+            <div class="step-no upper">Step 03 · Setup</div>
+            <h2 class="question title-font">One string or hybrid?</h2>
+            <p class="help body-font">A hybrid uses one string in the mains and another in the crosses.</p>
+            <div id="stockSetupBox">
+              <div class="choices">
+                <button class="choice" id="singleChoice"><strong>One string</strong><small>The same string throughout.</small></button>
+                <button class="choice" id="hybridChoice"><strong>Hybrid</strong><small>Different mains and crosses.</small></button>
               </div>
-              <div class="string-list" id="strings"></div>
+              <div id="crossBox" class="hidden" style="margin-top:16px">
+                <label class="field"><span>Cross string</span><input class="ctl" id="crossSearch" placeholder="Search for a cross string"></label>
+                <div class="string-list" id="crossStrings" style="margin-top:10px"></div>
+              </div>
             </div>
-
-            <div id="ownBox" class="hidden" style="margin-top:16px">
-              <label class="field"><span>String name</span><input class="ctl" id="ownName" placeholder="e.g. Luxilon ALU Power 1.25"></label>
+            <div id="ownStringBox" class="hidden">
+              <label class="field"><span>What string are you bringing?</span><input class="ctl" id="ownName" placeholder="e.g. Luxilon ALU Power 1.25"></label>
+              <div class="advice body-font">Please bring the string with your racket to reception. The restringing service is €20.</div>
             </div>
-
             <div class="nav"><button class="btn secondary" data-back>Back</button><button class="btn primary" data-next>Continue</button></div>
           </div>
         </div>
 
         <div class="step" data-step="4">
           <div class="step-card">
-            <div class="step-no upper">Step 04 · Setup</div>
-            <h2 class="question title-font">One string or hybrid?</h2>
-            <p class="help body-font">A hybrid uses one string in the mains and another in the crosses.</p>
-            <div class="choices">
-              <button class="choice" id="singleChoice"><strong>One string</strong><small>The same string throughout.</small></button>
-              <button class="choice" id="hybridChoice"><strong>Hybrid</strong><small>Different mains and crosses.</small></button>
-            </div>
-
-            <div id="crossBox" class="hidden" style="margin-top:16px">
-              <label class="field"><span>Cross string</span><input class="ctl" id="crossSearch" placeholder="Search for a cross string"></label>
-              <div class="string-list" id="crossStrings" style="margin-top:10px"></div>
-            </div>
-
-            <div class="nav"><button class="btn secondary" data-back>Back</button><button class="btn primary" data-next>Continue</button></div>
-          </div>
-        </div>
-
-        <div class="step" data-step="5">
-          <div class="step-card">
-            <div class="step-no upper">Step 05 · Tension</div>
+            <div class="step-no upper">Step 04 · Tension</div>
             <h2 class="question title-font">How tight?</h2>
             <p class="help body-font">Use the minus and plus buttons. Choose kilograms or pounds.</p>
 
@@ -417,9 +425,9 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
           </div>
         </div>
 
-        <div class="step" data-step="6">
+        <div class="step" data-step="5">
           <div class="step-card">
-            <div class="step-no upper">Step 06 · Collection</div>
+            <div class="step-no upper">Step 05 · Collection</div>
             <h2 class="question title-font">When do you need it?</h2>
             <p class="help body-font">Choose the quickest option or select a date.</p>
             <div class="choices ready-grid" id="readyChoices">
@@ -433,9 +441,9 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
           </div>
         </div>
 
-        <div class="step" data-step="7">
+        <div class="step" data-step="6">
           <div class="step-card">
-            <div class="step-no upper">Step 07 · Confirm</div>
+            <div class="step-no upper">Step 06 · Confirm</div>
             <h2 class="question title-font">Your request.</h2>
             <p class="help body-font">Check the details before sending the request to reception.</p>
             <div class="summary" id="summary"></div>
@@ -446,7 +454,7 @@ textarea.ctl{min-height:92px;border:1px solid var(--pearl);padding:11px;resize:v
           </div>
         </div>
 
-        <div class="step" data-step="8">
+        <div class="step" data-step="7">
           <div class="step-card success">
             <div class="success-icon">✓</div>
             <div class="step-no upper">Request received</div>
@@ -604,7 +612,7 @@ const ENDPOINT_KEY='ah-restring-endpoint-v3';
 const STOCK_KEY='ah-restring-stock-v3';
 
 const state={
-  step:1,
+  step:0,
   brand:'Wilson',
   model:'',
   mode:'',
@@ -658,19 +666,34 @@ function resetToFileStock(){
   state.stock=STRINGS.map(clone);
 }
 function renderProgress(){
-  $('#progress').innerHTML=Array.from({length:7},(_,i)=>`<i class="${i<state.step?'on':''}"></i>`).join('');
+  $('#progress').innerHTML=Array.from({length:6},(_,i)=>`<i class="${i<state.step?'on':''}"></i>`).join('');
 }
 function setStep(n){
   state.step=n;
+  $('#pageTitle').textContent=n===7?'Request received.':'Book your racket in.';
+  $('#pageIntro').textContent='Complete the details below and bring your racket to reception.';
+  $('#catalogView').classList.add('hidden');
+  $('#wizard').classList.remove('hidden');
+  $('#progress').classList.toggle('hidden',n===7);
   $$('.step').forEach(x=>x.classList.toggle('active',+x.dataset.step===n));
   renderProgress();
   window.scrollTo({top:0,behavior:'smooth'});
   $('.panel').scrollTo({top:0,behavior:'smooth'});
-  if(n===3)renderStringStep();
-  if(n===4)renderSetup();
-  if(n===5)renderTension();
-  if(n===6)renderReady();
-  if(n===7)renderSummary();
+  if(n===3)renderSetup();
+  if(n===4)renderTension();
+  if(n===5)renderReady();
+  if(n===6)renderSummary();
+}
+function backToCatalog(){
+  state.step=0;
+  $('#pageTitle').textContent='Choose your string.';
+  $('#pageIntro').textContent='Compare the strings available at the Racket Club and see the price before starting your restringing request.';
+  $('#wizard').classList.add('hidden');
+  $('#progress').classList.add('hidden');
+  $('#catalogView').classList.remove('hidden');
+  renderCatalog();
+  window.scrollTo({top:0,behavior:'smooth'});
+  $('.panel').scrollTo({top:0,behavior:'smooth'});
 }
 function renderBrands(){
   $('#brands').innerHTML='';
@@ -687,26 +710,68 @@ function renderBrands(){
   });
   $$('#brands .choice').forEach(b=>b.classList.toggle('selected',b.dataset.brand===state.brand));
 }
-function modeButtons(){
-  $$('#stringModes .choice').forEach(b=>b.classList.toggle('selected',b.dataset.mode===state.mode));
-}
-function renderNeeds(){
-  $('#needs').innerHTML='';
-  NEEDS.forEach(n=>{
-    const b=document.createElement('button');
-    b.type='button';b.className='choice';b.dataset.need=n.id;
-    b.innerHTML=`<strong>${n.label}</strong>`;
-    b.onclick=()=>{state.need=n.id;renderNeeds();renderStringList()};
-    $('#needs').appendChild(b);
-  });
-  $$('#needs .choice').forEach(b=>b.classList.toggle('selected',b.dataset.need===state.need));
-}
-function renderStringList(host=$('#strings'),query='',which='main'){
-  const q=(query||'').trim().toLowerCase();
-  let list=activeStock().filter(s=>(`${s.brand} ${s.name} ${s.gauge}`).toLowerCase().includes(q));
-  if(state.need){
-    list.sort((a,b)=>(b.stats?.[state.need]||0)-(a.stats?.[state.need]||0)||(a.price-b.price));
+function renderCatalog(){
+  const q=($('#catalogSearch')?.value||'').trim().toLowerCase();
+  const host=$('#catalogStrings');
+  const list=state.stock.filter(s=>(`${s.brand} ${s.name} ${s.gauge} ${s.type}`).toLowerCase().includes(q));
+  host.innerHTML='';
+  if(!list.length){
+    host.innerHTML=`<div class="body-font" style="padding:16px;border:1px dashed var(--pearl);font-size:12px;color:rgba(0,48,135,.65)">No strings match your search.</div>`;
+    return;
   }
+  list.forEach(s=>{
+    const available=s.available!==false;
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='catalog-item';
+    b.disabled=!available;
+    const top=document.createElement('div');top.className='string-top';
+    const name=document.createElement('span');name.className='string-name';name.textContent=`${s.brand} ${s.name}`;
+    const priceEl=document.createElement('span');priceEl.className='price';priceEl.textContent=money(s.price);
+    top.append(name,priceEl);
+    const meta=document.createElement('div');meta.className='meta';
+    meta.textContent=`${s.type||'Tennis string'} · ${s.gauge||'—'} mm · ${s.kg?.[0]||22}–${s.kg?.[1]||25} kg`;
+    const desc=document.createElement('div');desc.className='desc';
+    desc.textContent=s.for||'A string option available through the Racket Club.';
+    const action=document.createElement('div');action.className='catalog-action';
+    action.textContent=available?'Select this string':'Currently unavailable';
+    b.append(top,meta,desc,action);
+    if(available)b.onclick=()=>startRequestWithString(s.id);
+    host.appendChild(b);
+  });
+}
+function startRequestWithString(id){
+  const selected=state.stock.find(s=>s.id===id&&s.available!==false);
+  if(!selected)return;
+  state.mode='choose';
+  state.need='';
+  state.mainsId=selected.id;
+  state.crossId=null;
+  state.hybrid=false;
+  state.ownName='';
+  state.tensionTouched=false;
+  const mid=Math.round(((selected.kg?.[0]||22)+(selected.kg?.[1]||25))/2);
+  state.mains=state.unit==='kg'?mid:Math.round(lbOf(mid));
+  const crossKg=Math.max(mid-1,selected.kg?.[0]||22);
+  state.cross=state.unit==='kg'?crossKg:Math.round(lbOf(crossKg));
+  draw();renderPreview();setStep(1);
+}
+function startRequestWithOwnString(){
+  state.mode='own';
+  state.need='';
+  state.mainsId=null;
+  state.crossId=null;
+  state.hybrid=false;
+  state.ownName='';
+  state.mains=state.unit==='kg'?24:Math.round(lbOf(24));
+  state.cross=state.unit==='kg'?23:Math.round(lbOf(23));
+  state.tensionTouched=false;
+  $('#ownName').value='';
+  draw();renderPreview();setStep(1);
+}
+function renderStringList(host=$('#crossStrings'),query='',which='cross'){
+  const q=(query||'').trim().toLowerCase();
+  const list=activeStock().filter(s=>(`${s.brand} ${s.name} ${s.gauge}`).toLowerCase().includes(q));
   host.innerHTML='';
   if(!list.length){
     host.innerHTML=`<div class="body-font" style="padding:16px;border:1px dashed var(--pearl);font-size:12px;color:rgba(0,48,135,.65)">No strings found in stock.</div>`;
@@ -715,45 +780,27 @@ function renderStringList(host=$('#strings'),query='',which='main'){
   list.forEach(s=>{
     const b=document.createElement('button');
     b.type='button';
-    b.className='string-item '+((which==='main'?state.mainsId:state.crossId)===s.id?'selected':'');
+    b.className='string-item '+(state.crossId===s.id?'selected':'');
     b.innerHTML=`
       <div class="string-top">
         <span class="string-name">${s.brand} ${s.name}</span>
         <span class="price">${money(s.price)}</span>
       </div>
       <div class="meta">${s.type||''} · ${s.gauge||''} mm · ${s.kg?.[0]||22}–${s.kg?.[1]||25} kg</div>
-      ${state.need?`<div class="desc">${s.for||''}</div>`:''}
     `;
     b.onclick=()=>{
-      if(which==='main'){
-        state.mainsId=s.id;
-        if(state.hybrid&&state.crossId===s.id)state.crossId=null;
-      }else{
-        state.crossId=s.id;
-      }
-      const selected=which==='main'?mainString():crossString();
-      if(which==='main' && selected && state.step===3 && state.mode==='choose' && !state.tensionTouched){
-        const mid=Math.round((selected.kg[0]+selected.kg[1])/2);
-        state.mains=state.unit==='kg'?mid:Math.round(lbOf(mid));
-        state.cross=state.unit==='kg'?Math.max(mid-1,selected.kg[0]):Math.round(lbOf(Math.max(mid-1,selected.kg[0])));
-      }
-      draw();renderPreview();renderStringStep();renderSetup();renderTension();
+      state.crossId=s.id;
+      renderSetup();draw();renderPreview();renderTension();
     };
     host.appendChild(b);
   });
-}
-function renderStringStep(){
-  modeButtons();
-  $('#needBox').classList.toggle('hidden',state.mode!=='help');
-  $('#stringBox').classList.toggle('hidden',!(state.mode==='choose'||state.mode==='help'));
-  $('#ownBox').classList.toggle('hidden',state.mode!=='own');
-  if(state.mode==='help')renderNeeds();
-  renderStringList($('#strings'),$('#stringSearch').value,'main');
 }
 function renderSetup(){
   $('#singleChoice').classList.toggle('selected',!state.hybrid);
   $('#hybridChoice').classList.toggle('selected',state.hybrid);
   $('#crossBox').classList.toggle('hidden',!state.hybrid);
+  $('#stockSetupBox').classList.toggle('hidden',state.mode==='own');
+  $('#ownStringBox').classList.toggle('hidden',state.mode!=='own');
   if(state.hybrid)renderStringList($('#crossStrings'),$('#crossSearch').value,'cross');
 }
 function tensionStep(v,d){
@@ -800,6 +847,12 @@ function price(){
   return state.hybrid&&c&&c.id!==m.id?Math.round((m.price+c.price)/2)+CONFIG.hybridFee:m.price;
 }
 function renderPreview(){
+  if(state.step===0&&!state.mode){
+    $('#stageBrand').textContent='Choose your string';
+    $('#previewStatus').textContent='Browse the collection';
+    $('#stageSetup').textContent='Select a string to begin.';
+    return;
+  }
   const model=state.model.trim();
   $('#stageBrand').textContent=model?`${state.brand} ${model}`:state.brand;
   $('#previewStatus').textContent=model?`${state.brand} · ${model}`:state.brand;
@@ -826,35 +879,24 @@ function renderSummary(){
 function canContinue(){
   if(state.step===1)return $('#name').value.trim()&&$('#phone').value.trim();
   if(state.step===2)return !!state.brand;
-  if(state.step===3){
-    if(state.mode==='own')return $('#ownName').value.trim();
-    return !!state.mainsId && (state.mode==='choose'||(state.mode==='help'&&!!state.need));
-  }
-  if(state.step===4)return !state.hybrid||!!state.crossId;
-  if(state.step===6)return !!state.ready && (state.ready!=='date'||!!$('#readyDate').value);
+  if(state.step===3)return state.mode==='own'?!!$('#ownName').value.trim():(!state.hybrid||!!state.crossId);
+  if(state.step===5)return !!state.ready && (state.ready!=='date'||!!$('#readyDate').value);
   return true;
 }
 function next(){
   if(!canContinue()){alert('Please complete this step first.');return}
   if(state.step===2)state.model=$('#model').value.trim();
-  if(state.step===3)state.ownName=$('#ownName').value.trim();
-  if(state.step===6)state.readyDate=$('#readyDate').value;
-  if(state.step<7)setStep(state.step+1);
+  if(state.step===3&&state.mode==='own')state.ownName=$('#ownName').value.trim();
+  if(state.step===5)state.readyDate=$('#readyDate').value;
+  if(state.step<6)setStep(state.step+1);
 }
-function back(){if(state.step>1)setStep(state.step-1)}
+function back(){if(state.step===1)backToCatalog();else if(state.step>1)setStep(state.step-1)}
 
 $$('[data-next]').forEach(b=>b.onclick=next);
 $$('[data-back]').forEach(b=>b.onclick=back);
-
-$$('#stringModes .choice').forEach(b=>b.onclick=()=>{
-  state.mode=b.dataset.mode;
-  if(state.mode!=='help')state.need='';
-  if(state.mode==='choose'&&!state.mainsId){
-    const first=activeStock()[0];if(first)state.mainsId=first.id;
-  }
-  renderStringStep();draw();renderPreview();
-});
-$('#stringSearch').oninput=e=>renderStringList($('#strings'),e.target.value,'main');
+$('#backToCatalog').onclick=backToCatalog;
+$('#catalogSearch').oninput=renderCatalog;
+$('#ownStringStart').onclick=startRequestWithOwnString;
 $('#crossSearch').oninput=e=>renderStringList($('#crossStrings'),e.target.value,'cross');
 
 $('#singleChoice').onclick=()=>{
@@ -904,8 +946,8 @@ $$('[data-ready]').forEach(b=>b.onclick=()=>{
 ['name','phone','model','notes','ownName'].forEach(id=>$('#'+id).addEventListener('input',()=>{
   if(id==='model')state.model=$('#model').value;
   if(id==='ownName')state.ownName=$('#ownName').value;
-  if(state.step===1||state.step===2||state.step===7)renderPreview();
-  if(state.step===7)renderSummary();
+  if(state.step===1||state.step===2||state.step===6)renderPreview();
+  if(state.step===6)renderSummary();
 }));
 
 async function post(body){
@@ -953,7 +995,7 @@ async function submit(){
   try{
     await post(p);
     $('#jobOut').textContent=id;
-    setStep(8);
+    setStep(7);
     toast('Request sent');
   }catch(e){
     msg.textContent='We could not confirm the request was saved. Please ask reception before submitting again.';
@@ -980,7 +1022,7 @@ function renderStock(){
       persistLocal();renderStock();
       try{await post({action:'updateString',string:s});$('#stockStatus').textContent='Shared stock updated.'}
       catch(e){$('#stockStatus').textContent='Saved on this device. Shared stock could not be updated.'}
-      renderStringList();
+      renderCatalog();renderStringList($('#crossStrings'),$('#crossSearch').value,'cross');
     };
     r.querySelector('.price-btn').onclick=async()=>{
       const v=prompt(`Price for ${s.brand} ${s.name}`,s.price);
@@ -988,7 +1030,7 @@ function renderStock(){
       s.price=Math.max(0,Math.round(+v));persistLocal();renderStock();
       try{await post({action:'updateString',string:s});$('#stockStatus').textContent='Shared price updated.'}
       catch(e){$('#stockStatus').textContent='Saved on this device. Shared stock could not be updated.'}
-      renderStringList();
+      renderCatalog();renderStringList($('#crossStrings'),$('#crossSearch').value,'cross');
     };
     $('#stockList').appendChild(r);
   });
@@ -1015,7 +1057,7 @@ $('#addString').onclick=async()=>{
     stats:{control:5,spin:5,power:5,comfort:5,durability:5,feel:5},
     for:'',note:''
   };
-  state.stock.push(s);persistLocal();renderStock();renderStringList();
+  state.stock.push(s);persistLocal();renderStock();renderCatalog();renderStringList($('#crossStrings'),$('#crossSearch').value,'cross');
   $('#addForm').classList.add('hidden');
   ['newBrand','newName','newGauge','newPrice','newLo','newHi'].forEach(id=>$('#'+id).value='');
   try{await post({action:'addString',string:s});$('#stockStatus').textContent='String added and shared.'}
@@ -1029,7 +1071,7 @@ async function refreshSharedStock(){
     if(!r.ok)throw new Error(r.status);
     const x=await r.json();
     if(Array.isArray(x.strings)){
-      state.stock=x.strings;persistLocal();renderStock();renderStringList();
+      state.stock=x.strings;persistLocal();renderStock();renderCatalog();renderStringList($('#crossStrings'),$('#crossSearch').value,'cross');
       $('#stockStatus').textContent='Shared stock refreshed.';
     }else{
       throw new Error('Invalid stock response');
@@ -1218,8 +1260,8 @@ function bootSetup(){
   bootSetup();
   initStock();
   renderBrands();
+  renderCatalog();
   renderProgress();
-  renderStringStep();
   renderSetup();
   renderTension();
   const today=new Date();today.setHours(0,0,0,0);
